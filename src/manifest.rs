@@ -3,6 +3,7 @@ use serde::Deserialize;
 use std::{collections::BTreeMap, path::PathBuf};
 
 #[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Manifest {
     pub id: String,
     pub root: PathBuf,
@@ -19,6 +20,7 @@ pub struct Manifest {
 }
 
 #[derive(Debug, Clone, Deserialize, Default)]
+#[serde(deny_unknown_fields)]
 pub struct EnvConfig {
     #[serde(default)]
     pub allow: Vec<String>,
@@ -29,6 +31,7 @@ pub struct EnvConfig {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct SecretsConfig {
     pub provider: String,
     #[serde(default)]
@@ -36,12 +39,14 @@ pub struct SecretsConfig {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ShellConfig {
     pub program: PathBuf,
     pub init: PathBuf,
 }
 
 #[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct NetworkConfig {
     pub mode: String,
 }
@@ -58,6 +63,12 @@ impl Manifest {
     }
 
     pub fn validate(&self) -> Result<(), AienvError> {
+        if self.extends.is_some() {
+            return Err(AienvError::ManifestValidation(
+                "manifest inheritance via `extends` is not implemented yet".into(),
+            ));
+        }
+
         match self.network.mode.as_str() {
             "default" | "offline" | "proxy" => {}
             other => {
