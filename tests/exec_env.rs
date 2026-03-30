@@ -51,12 +51,23 @@ fn rejects_missing_cwd() {
 }
 
 #[test]
-fn rejects_cwd_outside_allowed_paths() {
+fn allows_normal_cwd_even_when_shared_paths_are_present() {
     let temp = tempfile::tempdir().unwrap();
     let cwd = temp.path().join("cwd");
     std::fs::create_dir_all(&cwd).unwrap();
 
     let shared = tempfile::tempdir().unwrap();
-    let err = validate_cwd(&cwd, &[shared.path().to_path_buf()]).unwrap_err();
-    assert!(err.to_string().contains("outside allowed paths"));
+    let validated = validate_cwd(&cwd, &[shared.path().to_path_buf()]).unwrap();
+    assert_eq!(validated, std::fs::canonicalize(&cwd).unwrap());
+}
+
+#[test]
+fn rejects_invalid_shared_paths() {
+    let temp = tempfile::tempdir().unwrap();
+    let cwd = temp.path().join("cwd");
+    std::fs::create_dir_all(&cwd).unwrap();
+
+    let missing_shared = temp.path().join("missing-shared");
+    let err = validate_cwd(&cwd, &[missing_shared]).unwrap_err();
+    assert!(err.to_string().contains("shared path"));
 }
