@@ -1,7 +1,9 @@
-use anyhow::Result;
+use aienv::manifest::Manifest;
+use anyhow::{anyhow, Result};
 use std::{fs, path::PathBuf};
 
 pub fn run(env: &str) -> Result<()> {
+    validate_env_name(env)?;
     let root = env_root(env)?;
     let was_present = root.exists();
 
@@ -11,7 +13,10 @@ pub fn run(env: &str) -> Result<()> {
 
     let manifest_path = root.join("manifest.toml");
     if !manifest_path.exists() {
-        fs::write(&manifest_path, default_manifest(env, &root))?;
+        let manifest = default_manifest(env, &root);
+        // Keep init-generated manifests parseable by the current runtime.
+        Manifest::parse(&manifest).map_err(|err| anyhow!(err.to_string()))?;
+        fs::write(&manifest_path, manifest)?;
     }
 
     let init_path = root.join("env.zsh");
@@ -26,6 +31,20 @@ pub fn run(env: &str) -> Result<()> {
     }
 
     Ok(())
+}
+
+fn validate_env_name(env: &str) -> Result<()> {
+    if env.is_empty() {
+        return Err(anyhow!("environment name cannot be empty"));
+    }
+
+    if env.chars().all(|ch| ch.is_ascii_alphanumeric() || ch == '-' || ch == '_') {
+        Ok(())
+    } else {
+        Err(anyhow!(
+            "environment name may only contain ASCII letters, digits, '-' and '_'"
+        ))
+    }
 }
 
 fn env_root(env: &str) -> Result<PathBuf> {
