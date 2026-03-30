@@ -42,16 +42,6 @@ pub fn resolve_from_keychain(service: &str, items: &[String]) -> Result<BTreeMap
     Ok(selected)
 }
 
-pub fn resolve_from_provider(
-    provider: SecretProvider<'_>,
-    items: &[String],
-) -> Result<BTreeMap<String, String>> {
-    match provider {
-        SecretProvider::Envfile(path) => resolve_from_envfile(path, items),
-        SecretProvider::Keychain { service } => resolve_from_keychain(service, items),
-    }
-}
-
 pub enum SecretProvider<'a> {
     Envfile(&'a Path),
     Keychain { service: &'a str },
