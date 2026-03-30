@@ -1,5 +1,25 @@
+use aienv::secrets::{resolve_from_provider, SecretProvider};
 use aienv::{manifest::Manifest, path_policy::validate_cwd, runtime_env::build_child_env};
 use std::{collections::BTreeMap, path::PathBuf};
+
+#[test]
+fn loads_only_requested_keys_from_envfile() {
+    let dir = tempfile::TempDir::new().unwrap();
+    let envfile = dir.path().join("secrets.env");
+    std::fs::write(
+        &envfile,
+        "OPENAI_API_KEY=one\nANTHROPIC_API_KEY=two\nUNUSED_KEY=three\n",
+    )
+    .unwrap();
+
+    let secrets = resolve_from_provider(
+        SecretProvider::Envfile(&envfile),
+        &["OPENAI_API_KEY".into()],
+    )
+    .unwrap();
+    assert_eq!(secrets["OPENAI_API_KEY"], "one");
+    assert!(!secrets.contains_key("ANTHROPIC_API_KEY"));
+}
 
 #[test]
 fn builds_sanitized_child_env() {
