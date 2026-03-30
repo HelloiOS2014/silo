@@ -6,11 +6,12 @@ use std::{
     process::{Command, ExitStatus},
 };
 
-use crate::{manifest::Manifest, runtime_env::build_child_env};
+use crate::{manifest::Manifest, path_policy::validate_cwd, runtime_env::build_child_env};
 
 pub fn run(env: &str, cwd: Option<PathBuf>, command: Vec<String>) -> Result<ExitStatus> {
     let manifest = load_manifest(env)?;
     let cwd = cwd.unwrap_or(std::env::current_dir()?);
+    let cwd = validate_cwd(&cwd, &manifest.shared_paths)?;
 
     let host: BTreeMap<String, String> = std::env::vars().collect();
     let child_env = build_child_env(&manifest, &host, BTreeMap::new());
@@ -21,7 +22,7 @@ pub fn run(env: &str, cwd: Option<PathBuf>, command: Vec<String>) -> Result<Exit
 
     let status = Command::new(program)
         .args(args)
-        .current_dir(cwd)
+        .current_dir(&cwd)
         .env_clear()
         .envs(child_env)
         .status()?;
@@ -29,7 +30,7 @@ pub fn run(env: &str, cwd: Option<PathBuf>, command: Vec<String>) -> Result<Exit
     Ok(status)
 }
 
-fn load_manifest(env: &str) -> Result<Manifest> {
+pub(crate) fn load_manifest(env: &str) -> Result<Manifest> {
     let home = std::env::var("HOME")?;
     let path = PathBuf::from(home).join(".aienv").join(env).join("manifest.toml");
     let raw = fs::read_to_string(&path)
