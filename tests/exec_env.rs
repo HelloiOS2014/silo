@@ -13,9 +13,30 @@ fn loads_only_requested_keys_from_envfile() {
     .unwrap();
 
     let _provider = SecretProvider::Envfile(&envfile);
+    let _unused_provider = SecretProvider::Keychain { service: "aienv.test" };
     let secrets = resolve_from_envfile(&envfile, &["OPENAI_API_KEY".into()]).unwrap();
     assert_eq!(secrets["OPENAI_API_KEY"], "one");
     assert!(!secrets.contains_key("ANTHROPIC_API_KEY"));
+}
+
+#[test]
+fn rejects_invalid_envfile_lines() {
+    let dir = tempfile::TempDir::new().unwrap();
+    let envfile = dir.path().join("secrets.env");
+    std::fs::write(&envfile, "OPENAI_API_KEY=one\nBROKEN_LINE\n").unwrap();
+
+    let err = resolve_from_envfile(&envfile, &["OPENAI_API_KEY".into()]).unwrap_err();
+    assert!(err.to_string().contains("invalid envfile line"));
+}
+
+#[test]
+fn rejects_missing_requested_keys_from_envfile() {
+    let dir = tempfile::TempDir::new().unwrap();
+    let envfile = dir.path().join("secrets.env");
+    std::fs::write(&envfile, "OPENAI_API_KEY=one\n").unwrap();
+
+    let err = resolve_from_envfile(&envfile, &["ANTHROPIC_API_KEY".into()]).unwrap_err();
+    assert!(err.to_string().contains("missing secret"));
 }
 
 #[test]

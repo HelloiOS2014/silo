@@ -32,10 +32,20 @@ pub fn resolve_from_keychain(service: &str, items: &[String]) -> Result<BTreeMap
             .output()?;
 
         if !output.status.success() {
-            bail!("missing secret {item} in keychain service {service}");
+            let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+            if stderr.is_empty() {
+                bail!("failed to read secret {item} from keychain service {service}");
+            }
+            bail!("failed to read secret {item} from keychain service {service}: {stderr}");
         }
 
-        let value = String::from_utf8(output.stdout)?.trim().to_string();
+        let mut value = String::from_utf8(output.stdout)?;
+        if value.ends_with('\n') {
+            value.pop();
+            if value.ends_with('\r') {
+                value.pop();
+            }
+        }
         selected.insert(item.clone(), value);
     }
 
