@@ -1,7 +1,6 @@
-mod commands;
-
 use aienv::{
     cli::{Cli, Commands},
+    commands,
 };
 use anyhow::Result;
 use clap::Parser;

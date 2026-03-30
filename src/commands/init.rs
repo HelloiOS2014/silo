@@ -1,4 +1,4 @@
-use aienv::manifest::Manifest;
+use crate::manifest::Manifest;
 use anyhow::{anyhow, Result};
 use std::{fs, path::PathBuf};
 
