@@ -1,5 +1,7 @@
 # silo
 
+[中文文档](README_zh.md)
+
 Lightweight environment isolation for AI CLI tools on macOS.
 
 silo creates isolated execution contexts for different AI identities and accounts. Each environment gets its own HOME, XDG directories, credentials, and configuration — so your work and personal AI accounts never cross-contaminate.
