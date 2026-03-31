@@ -156,7 +156,7 @@ envfile 支持 dotenv 格式：`#` 注释、`export` 前缀、单双引号、双
 
 ## 使用教程
 
-- [在隔离环境中配置不同源的 Claude Code（MiniMax、Kimi 等）](docs/guide-claude-code-providers.md)
+- [在隔离环境中配置不同源的 Claude Code（MiniMax、Kimi 等）](docs/guide-claude-code-providers_zh.md)
 
 ## 许可证
 

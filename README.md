@@ -156,7 +156,7 @@ The child process starts with a **clean** environment (not inherited from host).
 
 ## Guides
 
-- [Configure Claude Code with different API providers (MiniMax, Kimi, etc.)](docs/guide-claude-code-providers.md) (Chinese)
+- [Configure Claude Code with different API providers (MiniMax, Kimi, etc.)](docs/guide-claude-code-providers.md)
 
 ## License
 

@@ -1,36 +1,38 @@
-# 在 silo 中为不同环境配置不同的 Claude Code 源
+# Configure Claude Code with Different API Providers in silo
 
-本教程介绍如何使用 silo 为 Claude Code 配置不同的 API 提供商（MiniMax、Kimi 等），实现多账号/多源隔离。
+[中文版](guide-claude-code-providers_zh.md)
 
-## 为什么需要 silo？
+This guide shows how to use silo to run Claude Code with different API providers (MiniMax, Kimi, Anthropic) in isolated environments, so each provider gets its own credentials, configuration, and conversation history.
 
-Claude Code 的配置依赖环境变量和 `~/.claude/` 目录下的文件。如果你同时使用多个 API 源（比如工作用官方 Anthropic、个人用 MiniMax、测试用 Kimi），直接切换需要反复修改环境变量和配置文件。
+## Why silo?
 
-silo 为每个源创建独立的 HOME 和配置目录，互不干扰，一条命令切换。
+Claude Code configuration depends on environment variables and files under `~/.claude/`. If you use multiple API sources (e.g. official Anthropic for work, MiniMax for personal, Kimi for testing), switching requires changing environment variables and config files each time.
 
-## 前置条件
+silo creates an independent HOME and config directory for each source. One command to switch, zero cross-contamination.
 
-- 已安装 silo（`cargo install --path .`）
-- 已安装 Claude Code（`npm install -g @anthropic-ai/claude-code`）
-- 已获取各平台的 API Key
+## Prerequisites
 
-## 配置 MiniMax 环境
+- silo installed (`cargo install --path .`)
+- Claude Code installed (`npm install -g @anthropic-ai/claude-code`)
+- API keys for your chosen providers
 
-MiniMax 通过兼容 Anthropic API 的方式提供服务。
+## Setting Up MiniMax
 
-### 1. 创建环境
+MiniMax provides an Anthropic-compatible API endpoint.
+
+### 1. Create the environment
 
 ```bash
 silo init -e minimax
 ```
 
-### 2. 编辑 manifest
+### 2. Edit the manifest
 
-编辑 `~/.silo/minimax/manifest.toml`：
+Edit `~/.silo/minimax/manifest.toml`:
 
 ```toml
 id = "minimax"
-root = "/Users/你的用户名/.silo/minimax"
+root = "/Users/yourname/.silo/minimax"
 
 [env]
 allow = ["PATH", "TERM", "LANG", "LC_ALL", "COLORTERM"]
@@ -59,45 +61,45 @@ items = ["ANTHROPIC_AUTH_TOKEN"]
 mode = "default"
 ```
 
-### 3. 配置密钥
+### 3. Configure the secret
 
 ```bash
-echo 'ANTHROPIC_AUTH_TOKEN=你的MiniMax API Key' > ~/.silo/minimax/secrets.env
+echo 'ANTHROPIC_AUTH_TOKEN=your-minimax-api-key' > ~/.silo/minimax/secrets.env
 chmod 600 ~/.silo/minimax/secrets.env
 ```
 
-### 4. 初始化 Claude Code 配置
+### 4. Initialize Claude Code config
 
-首次使用需要在环境的 HOME 下创建 Claude Code 的初始化标记：
+First run requires creating the onboarding marker in the environment's HOME:
 
 ```bash
 silo exec -e minimax -- mkdir -p \$HOME/.claude
 silo exec -e minimax -- bash -c 'echo "{\"hasCompletedOnboarding\": true}" > $HOME/.claude.json'
 ```
 
-### 5. 启动
+### 5. Launch
 
 ```bash
 silo exec -e minimax -- claude
 ```
 
-## 配置 Kimi 环境
+## Setting Up Kimi
 
-Kimi（月之暗面）也提供兼容 Anthropic API 的 Claude Code 接入。
+Kimi (Moonshot AI) also provides an Anthropic-compatible Claude Code endpoint.
 
-### 1. 创建环境
+### 1. Create the environment
 
 ```bash
 silo init -e kimi
 ```
 
-### 2. 编辑 manifest
+### 2. Edit the manifest
 
-编辑 `~/.silo/kimi/manifest.toml`：
+Edit `~/.silo/kimi/manifest.toml`:
 
 ```toml
 id = "kimi"
-root = "/Users/你的用户名/.silo/kimi"
+root = "/Users/yourname/.silo/kimi"
 
 [env]
 allow = ["PATH", "TERM", "LANG", "LC_ALL", "COLORTERM"]
@@ -121,45 +123,45 @@ items = ["ANTHROPIC_API_KEY"]
 mode = "default"
 ```
 
-### 3. 配置密钥
+### 3. Configure the secret
 
 ```bash
-echo 'ANTHROPIC_API_KEY=sk-kimi-你的Key' > ~/.silo/kimi/secrets.env
+echo 'ANTHROPIC_API_KEY=sk-kimi-your-key' > ~/.silo/kimi/secrets.env
 chmod 600 ~/.silo/kimi/secrets.env
 ```
 
-### 4. 初始化 Claude Code 配置
+### 4. Initialize Claude Code config
 
 ```bash
 silo exec -e kimi -- mkdir -p \$HOME/.claude
 silo exec -e kimi -- bash -c 'echo "{\"hasCompletedOnboarding\": true}" > $HOME/.claude.json'
 ```
 
-### 5. 启动
+### 5. Launch
 
 ```bash
 silo exec -e kimi -- claude
 ```
 
-启动后输入 `/status` 确认模型已正确配置。
+Type `/status` after launch to confirm the model is correctly configured.
 
-## 配置官方 Anthropic 环境
+## Setting Up Official Anthropic
 
-如果你也想把官方 Anthropic 账号纳入 silo 管理：
+To manage the official Anthropic account through silo as well:
 
-### 1. 创建环境
+### 1. Create the environment
 
 ```bash
 silo init -e anthropic
 ```
 
-### 2. 编辑 manifest
+### 2. Edit the manifest
 
-编辑 `~/.silo/anthropic/manifest.toml`：
+Edit `~/.silo/anthropic/manifest.toml`:
 
 ```toml
 id = "anthropic"
-root = "/Users/你的用户名/.silo/anthropic"
+root = "/Users/yourname/.silo/anthropic"
 
 [env]
 allow = ["PATH", "TERM", "LANG", "LC_ALL", "COLORTERM"]
@@ -176,63 +178,63 @@ items = ["ANTHROPIC_API_KEY"]
 mode = "default"
 ```
 
-### 3. 配置密钥
+### 3. Configure the secret
 
 ```bash
-echo 'ANTHROPIC_API_KEY=sk-ant-你的Key' > ~/.silo/anthropic/secrets.env
+echo 'ANTHROPIC_API_KEY=sk-ant-your-key' > ~/.silo/anthropic/secrets.env
 chmod 600 ~/.silo/anthropic/secrets.env
 ```
 
-### 4. 启动
+### 4. Launch
 
 ```bash
 silo exec -e anthropic -- claude
 ```
 
-## 日常使用
+## Daily Usage
 
-配置完成后，日常切换只需一条命令：
+Once configured, switching is a single command:
 
 ```bash
-# 用 MiniMax 源
+# Use MiniMax
 silo exec -e minimax -- claude
 
-# 用 Kimi 源
+# Use Kimi
 silo exec -e kimi -- claude
 
-# 用官方 Anthropic
+# Use official Anthropic
 silo exec -e anthropic -- claude
 
-# 查看所有环境
+# List all environments
 silo ls
 
-# 查看某个环境的配置
+# Inspect an environment's config
 silo show -e minimax
 ```
 
-每个环境的 Claude Code 配置、对话历史、缓存完全独立，互不影响。
+Each environment's Claude Code configuration, conversation history, and cache are completely independent.
 
-## 进入交互式 shell
+## Interactive Shell
 
-如果你需要在隔离环境中做更多操作（比如安装 MCP 工具、修改 Claude Code 设置）：
+If you need to do more inside an isolated environment (e.g. install MCP tools, modify Claude Code settings):
 
 ```bash
 silo shell -e minimax
-# 现在你在 minimax 的隔离环境中
-claude settings  # 修改 Claude Code 设置
-exit             # 退出
+# You are now in the minimax isolated environment
+claude settings  # Modify Claude Code settings
+exit             # Leave
 ```
 
-## 使用 Keychain 代替 envfile
+## Using Keychain Instead of envfile
 
-如果你偏好使用 macOS 钥匙串而非文件存储密钥：
+If you prefer macOS Keychain over plaintext files for secrets:
 
 ```bash
-# 添加密钥到钥匙串
-security add-generic-password -s silo.minimax -a ANTHROPIC_AUTH_TOKEN -w "你的API Key"
+# Add the secret to Keychain
+security add-generic-password -s silo.minimax -a ANTHROPIC_AUTH_TOKEN -w "your-api-key"
 ```
 
-然后将 manifest 中的 `[secrets]` 改为：
+Then change `[secrets]` in the manifest to:
 
 ```toml
 [secrets]
@@ -240,18 +242,18 @@ provider = "keychain"
 items = ["ANTHROPIC_AUTH_TOKEN"]
 ```
 
-钥匙串方式更安全——密钥由系统加密存储，不会以明文出现在文件中。
+Keychain is more secure — secrets are encrypted by the system and never appear as plaintext on disk.
 
-## 故障排查
+## Troubleshooting
 
-**Claude Code 提示未登录或需要 onboarding：**
-确认已创建 `$HOME/.claude.json`（步骤 4）。
+**Claude Code prompts for login or onboarding:**
+Ensure `$HOME/.claude.json` was created (step 4).
 
-**API 请求失败（401/403）：**
-检查密钥是否正确：`silo exec -e minimax -- printenv ANTHROPIC_AUTH_TOKEN`
+**API request fails (401/403):**
+Check the secret is set correctly: `silo exec -e minimax -- printenv ANTHROPIC_AUTH_TOKEN`
 
-**环境变量泄露：**
-用 `silo show -e minimax` 检查配置，确认 deny 列表包含了不应继承的变量。
+**Environment variable leakage:**
+Run `silo show -e minimax` to inspect the config. Ensure sensitive variables are in the deny list.
 
-**宿主机密钥污染隔离环境：**
-确认敏感变量在 deny 列表中，而不是在 allow 列表中。silo 的子进程从空白环境启动，只有 allow 列表中的变量才会被继承。
+**Host secrets polluting the isolated environment:**
+Confirm sensitive variables are in the deny list, not the allow list. silo starts child processes with a clean environment — only variables in the allow list are inherited from the host.
