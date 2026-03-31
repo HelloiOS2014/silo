@@ -37,6 +37,13 @@ pub enum Commands {
         #[arg(long, help = "Override working directory")]
         cwd: Option<PathBuf>,
     },
+    /// Run setup hooks for an environment
+    Setup {
+        #[arg(short = 'e', long, help = "Environment name")]
+        env: String,
+        #[arg(long, help = "Re-run setup even if already completed")]
+        force: bool,
+    },
     /// List all environments
     Ls,
     /// Show resolved environment configuration

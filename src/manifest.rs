@@ -10,6 +10,7 @@ const RESERVED_KEYS: &[&str] = &[
     "XDG_STATE_HOME",
     "TMPDIR",
     "SILO_ROOT",
+    "SILO_HOST_HOME",
 ];
 
 #[derive(Debug, Clone, Deserialize)]
@@ -28,6 +29,8 @@ pub struct Manifest {
     pub shell: ShellConfig,
     #[serde(default)]
     pub network: NetworkConfig,
+    #[serde(default)]
+    pub setup: SetupConfig,
     #[serde(default)]
     pub extends: Option<String>,
 }
@@ -95,6 +98,13 @@ impl Default for NetworkConfig {
             proxy_url: None,
         }
     }
+}
+
+#[derive(Debug, Clone, Deserialize, Default)]
+#[serde(deny_unknown_fields)]
+pub struct SetupConfig {
+    #[serde(default)]
+    pub on_init: Vec<String>,
 }
 
 fn default_true() -> bool {

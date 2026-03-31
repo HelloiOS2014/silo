@@ -61,6 +61,11 @@ pub fn build_child_env(
     });
     env.insert("SILO_ROOT".into(), silo_root);
 
+    // SILO_HOST_HOME: the real host HOME, for setup scripts that need host file access
+    if let Some(real_home) = host.get("HOME") {
+        env.insert("SILO_HOST_HOME".into(), real_home.clone());
+    }
+
     env
 }
 

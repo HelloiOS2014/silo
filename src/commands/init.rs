@@ -39,6 +39,14 @@ pub fn run(env: &str) -> Result<()> {
         println!("initialized environment {env}");
     }
 
+    // Hint about setup hooks if manifest has them
+    let raw = fs::read_to_string(&manifest_path)?;
+    if let Ok(m) = Manifest::parse(&raw)
+        && !m.setup.on_init.is_empty()
+    {
+        println!("hint: run `silo setup -e {env}` to complete tool setup");
+    }
+
     Ok(())
 }
 

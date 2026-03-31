@@ -24,6 +24,7 @@ fn main() -> Result<()> {
             let code = commands::shell::run(&env, cwd)?;
             std::process::exit(code);
         }
+        Commands::Setup { env, force } => commands::setup::run(&env, force)?,
         Commands::Ls => commands::ls::run()?,
         Commands::Show { env } => commands::show::run(&env)?,
     }
