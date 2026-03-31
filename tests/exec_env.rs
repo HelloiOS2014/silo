@@ -114,7 +114,7 @@ fn allows_normal_cwd_even_when_shared_paths_are_present() {
     std::fs::create_dir_all(&cwd).unwrap();
 
     let shared = tempfile::tempdir().unwrap();
-    let validated = validate_cwd(&cwd, &[shared.path().to_path_buf()]).unwrap();
+    let (validated, _) = validate_cwd(&cwd, &[shared.path().to_path_buf()]).unwrap();
     assert_eq!(validated, std::fs::canonicalize(&cwd).unwrap());
 }
 
@@ -136,6 +136,8 @@ fn exec_runs_command_in_environment_with_isolated_home() {
     fs::create_dir_all(env_root.join("home")).unwrap();
     fs::create_dir_all(env_root.join("config")).unwrap();
     fs::create_dir_all(env_root.join("cache")).unwrap();
+    fs::create_dir_all(env_root.join("data")).unwrap();
+    fs::create_dir_all(env_root.join("state")).unwrap();
     fs::create_dir_all(env_root.join("tmp")).unwrap();
     fs::create_dir_all(env_root.join("run")).unwrap();
     fs::write(

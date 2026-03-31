@@ -1,20 +1,19 @@
-use crate::manifest::Manifest;
+use crate::{env_path, manifest::Manifest};
 use anyhow::{anyhow, Result};
 use std::{fs, path::PathBuf};
 
 pub fn run(env: &str) -> Result<()> {
     validate_env_name(env)?;
-    let root = env_root(env)?;
+    let root = env_path::env_root(env)?;
     let was_present = root.exists();
 
-    for suffix in ["home", "config", "cache", "tmp", "run"] {
+    for suffix in ["home", "config", "cache", "data", "state", "tmp", "run"] {
         fs::create_dir_all(root.join(suffix))?;
     }
 
     let manifest_path = root.join("manifest.toml");
     if !manifest_path.exists() {
         let manifest = default_manifest(env, &root);
-        // Keep init-generated manifests parseable by the current runtime.
         Manifest::parse(&manifest).map_err(|err| anyhow!(err.to_string()))?;
         fs::write(&manifest_path, manifest)?;
     }
@@ -22,6 +21,16 @@ pub fn run(env: &str) -> Result<()> {
     let init_path = root.join("env.zsh");
     if !init_path.exists() {
         fs::write(&init_path, format!("export AI_ENV={env}\n"))?;
+    }
+
+    let secrets_path = root.join("secrets.env");
+    if !secrets_path.exists() {
+        fs::write(&secrets_path, "")?;
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            fs::set_permissions(&secrets_path, fs::Permissions::from_mode(0o600))?;
+        }
     }
 
     if was_present {
@@ -47,14 +56,46 @@ fn validate_env_name(env: &str) -> Result<()> {
     }
 }
 
-fn env_root(env: &str) -> Result<PathBuf> {
-    let home = std::env::var("HOME")?;
-    Ok(PathBuf::from(home).join(".aienv").join(env))
-}
-
 fn default_manifest(env: &str, root: &PathBuf) -> String {
     format!(
-        "id = \"{env}\"\nroot = \"{}\"\ninherit_cwd = true\nshared_paths = []\n\n[env]\nallow = [\"TERM\", \"LANG\", \"LC_ALL\", \"COLORTERM\", \"PATH\"]\ndeny = [\"OPENAI_API_KEY\", \"ANTHROPIC_API_KEY\", \"GEMINI_API_KEY\", \"SSH_AUTH_SOCK\"]\n\n[env.set]\nAI_ENV = \"{env}\"\n\n[secrets]\nprovider = \"keychain\"\nitems = []\n\n[shell]\nprogram = \"/bin/zsh\"\ninit = \"env.zsh\"\n\n[network]\nmode = \"default\"\n",
-        root.display()
+        r#"id = "{env}"
+root = "{root}"
+inherit_cwd = true
+shared_paths = []
+
+[env]
+allow = ["TERM", "LANG", "LC_ALL", "COLORTERM", "PATH"]
+deny = [
+  "SSH_AUTH_SOCK",
+  "OPENAI_API_KEY",
+  "ANTHROPIC_API_KEY",
+  "GEMINI_API_KEY",
+  "AWS_ACCESS_KEY_ID",
+  "AWS_SECRET_ACCESS_KEY",
+  "AWS_SESSION_TOKEN",
+  "GOOGLE_APPLICATION_CREDENTIALS",
+  "AZURE_CLIENT_ID",
+  "AZURE_CLIENT_SECRET",
+  "AZURE_TENANT_ID",
+  "http_proxy",
+  "https_proxy",
+  "ALL_PROXY",
+]
+
+[env.set]
+AI_ENV = "{env}"
+
+[secrets]
+provider = "keychain"
+items = []
+
+[shell]
+program = "/bin/zsh"
+init = "env.zsh"
+
+[network]
+mode = "default"
+"#,
+        root = root.display()
     )
 }

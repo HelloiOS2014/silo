@@ -63,6 +63,31 @@ fn init_is_idempotent() {
 }
 
 #[test]
+fn init_creates_data_state_dirs_and_secrets_env() {
+    let home = TempDir::new().unwrap();
+    let env_root = home.path().join(".aienv").join("newenv");
+
+    let mut cmd = Command::cargo_bin("aienv").unwrap();
+    cmd.env("HOME", home.path())
+        .args(["init", "--env", "newenv"]);
+
+    cmd.assert().success();
+    assert!(env_root.join("data").exists());
+    assert!(env_root.join("state").exists());
+    assert!(env_root.join("secrets.env").exists());
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let mode = fs::metadata(env_root.join("secrets.env"))
+            .unwrap()
+            .permissions()
+            .mode();
+        assert_eq!(mode & 0o777, 0o600);
+    }
+}
+
+#[test]
 fn init_rejects_path_escaping_env_names() {
     let home = TempDir::new().unwrap();
 
