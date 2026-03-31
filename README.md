@@ -8,6 +8,22 @@ silo creates isolated execution contexts for different AI identities and account
 
 ## Install
 
+### Option 1: Pre-built binary (recommended)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/HelloiOS2014/silo/main/install.sh | sh
+```
+
+Or with custom prefix:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/HelloiOS2014/silo/main/install.sh | sh -s -- --prefix /usr/local
+```
+
+The binary will be installed to `<prefix>/bin/silo`.
+
+### Option 2: Build from source
+
 ```bash
 cargo install --path .
 ```
