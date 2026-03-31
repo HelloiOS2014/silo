@@ -51,11 +51,12 @@ ANTHROPIC_DEFAULT_SONNET_MODEL = "MiniMax-M2.7"
 ANTHROPIC_DEFAULT_OPUS_MODEL = "MiniMax-M2.7"
 ANTHROPIC_DEFAULT_HAIKU_MODEL = "MiniMax-M2.7"
 API_TIMEOUT_MS = "3000000"
+MINIMAX_API_HOST = "https://api.minimaxi.com"
 CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC = "1"
 
 [secrets]
 provider = "envfile"
-items = ["ANTHROPIC_AUTH_TOKEN"]
+items = ["ANTHROPIC_AUTH_TOKEN", "MINIMAX_API_KEY"]
 
 [network]
 mode = "default"
@@ -64,7 +65,10 @@ mode = "default"
 ### 3. 配置密钥
 
 ```bash
-echo 'ANTHROPIC_AUTH_TOKEN=你的MiniMax API Key' > ~/.silo/minimax/secrets.env
+cat > ~/.silo/minimax/secrets.env << 'EOF'
+ANTHROPIC_AUTH_TOKEN=你的MiniMax API Key
+MINIMAX_API_KEY=你的MiniMax API Key
+EOF
 chmod 600 ~/.silo/minimax/secrets.env
 ```
 
@@ -263,7 +267,7 @@ silo exec -e minimax -- claude
 
 应该能看到 `web_search` 和 `understand_image` 两个工具。
 
-> **说明：** MCP server 的 API Key 通过 MCP 配置的 `env` 字段传递，不需要加到 silo manifest 的 secrets 中。这是因为 Claude Code 从自己的 settings 读取 MCP 环境变量，而非从进程环境中读取。
+> **说明：** MCP server 所需的环境变量（如 `MINIMAX_API_KEY` 和 `MINIMAX_API_HOST`）推荐通过 silo manifest 配置——API Key 放在 `[secrets].items`，Host URL 放在 `[env.set]`。这样 API Key 受 `secrets.env` 文件权限（mode 600）或 macOS 钥匙串保护，更加安全。也可以通过 `settings.json` 中 MCP 配置的 `env` 字段传递，但那样 Key 会以明文存储在 JSON 文件中。
 
 ### 其他厂商的 MCP Server
 
@@ -340,6 +344,9 @@ items = ["ANTHROPIC_AUTH_TOKEN"]
 
 **环境变量泄露：**
 用 `silo show -e minimax` 检查配置，确认 deny 列表包含了不应继承的变量。
+
+**MCP server 启动失败（如 `MINIMAX_API_KEY environment variable is required`）：**
+MCP server 缺少必要的环境变量。查看 `~/.silo/<环境名>/home/.claude/debug/` 下的调试日志获取具体报错信息。将所需的 API Key 添加到 `manifest.toml` 的 `[secrets].items` 和 `secrets.env` 中，非密钥变量（如 `MINIMAX_API_HOST`）添加到 `[env.set]` 中。
 
 **宿主机密钥污染隔离环境：**
 确认敏感变量在 deny 列表中，而不是在 allow 列表中。silo 的子进程从空白环境启动，只有 allow 列表中的变量才会被继承。

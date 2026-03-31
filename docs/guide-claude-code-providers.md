@@ -51,11 +51,12 @@ ANTHROPIC_DEFAULT_SONNET_MODEL = "MiniMax-M2.7"
 ANTHROPIC_DEFAULT_OPUS_MODEL = "MiniMax-M2.7"
 ANTHROPIC_DEFAULT_HAIKU_MODEL = "MiniMax-M2.7"
 API_TIMEOUT_MS = "3000000"
+MINIMAX_API_HOST = "https://api.minimaxi.com"
 CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC = "1"
 
 [secrets]
 provider = "envfile"
-items = ["ANTHROPIC_AUTH_TOKEN"]
+items = ["ANTHROPIC_AUTH_TOKEN", "MINIMAX_API_KEY"]
 
 [network]
 mode = "default"
@@ -64,7 +65,10 @@ mode = "default"
 ### 3. Configure the secret
 
 ```bash
-echo 'ANTHROPIC_AUTH_TOKEN=your-minimax-api-key' > ~/.silo/minimax/secrets.env
+cat > ~/.silo/minimax/secrets.env << 'EOF'
+ANTHROPIC_AUTH_TOKEN=your-minimax-api-key
+MINIMAX_API_KEY=your-minimax-api-key
+EOF
 chmod 600 ~/.silo/minimax/secrets.env
 ```
 
@@ -263,7 +267,7 @@ silo exec -e minimax -- claude
 
 You should see `web_search` and `understand_image` listed.
 
-> **Note:** MCP server API keys are passed through the MCP config's `env` field, not through silo's manifest secrets. This is because Claude Code reads MCP env vars from its own settings, not from the process environment.
+> **Note:** MCP server environment variables (like `MINIMAX_API_KEY` and `MINIMAX_API_HOST`) are recommended to be configured through silo's manifest — API keys in `[secrets].items` and host URLs in `[env.set]`. This way API keys are protected by `secrets.env` file permissions (mode 600) or macOS Keychain. Alternatively, you can pass them through the MCP config's `env` field in `settings.json`, but that stores keys in plaintext JSON.
 
 ### Other Provider MCP Servers
 
@@ -340,6 +344,9 @@ Check the secret is set correctly: `silo exec -e minimax -- printenv ANTHROPIC_A
 
 **Environment variable leakage:**
 Run `silo show -e minimax` to inspect the config. Ensure sensitive variables are in the deny list.
+
+**MCP server fails to start (e.g. `MINIMAX_API_KEY environment variable is required`):**
+The MCP server needs environment variables that aren't configured. Check the debug log at `~/.silo/<env>/home/.claude/debug/` for the specific error. Add the required API key to `[secrets].items` in `manifest.toml` and `secrets.env`, and add non-secret variables (like `MINIMAX_API_HOST`) to `[env.set]`.
 
 **Host secrets polluting the isolated environment:**
 Confirm sensitive variables are in the deny list, not the allow list. silo starts child processes with a clean environment — only variables in the allow list are inherited from the host.
