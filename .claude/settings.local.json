@@ -5,7 +5,10 @@
       "Bash(git -C /Users/JOYY/code/ToolSpaces/silo tag --list)",
       "Bash(rustc --version)",
       "Bash(cargo fmt:*)",
-      "Bash(rustup default:*)"
+      "Bash(rustup default:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ]
   }
 }

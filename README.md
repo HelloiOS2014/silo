@@ -25,7 +25,7 @@ The binary will be installed to `<prefix>/bin/silo`.
 ### Option 2: Build from source
 
 ```bash
-cargo install --path .
+cargo install --prefix ~/.local --path .
 ```
 
 Requires Rust 1.85+ (edition 2024).

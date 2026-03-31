@@ -23,7 +23,7 @@ curl -fsSL https://raw.githubusercontent.com/HelloiOS2014/silo/main/install.sh |
 ### 方式二：从源码构建
 
 ```bash
-cargo install --path .
+cargo install --prefix ~/.local --path .
 ```
 
 需要 Rust 1.85+（edition 2024）。
