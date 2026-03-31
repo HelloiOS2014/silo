@@ -198,7 +198,7 @@ envfile 支持 dotenv 格式：`#` 注释、`export` 前缀、单双引号、双
 
 ## 使用教程
 
-- [在隔离环境中安装和配置工具](docs/guide-tool-setup.md) — ios-pilot、lark-cli、npm 包、OAuth 工具等安装模式
+- [在隔离环境中安装和配置工具](docs/guide-tool-setup_zh.md) — ios-pilot、lark-cli、npm 包、OAuth 工具等安装模式
 - [在隔离环境中配置不同源的 Claude Code（MiniMax、Kimi 等）](docs/guide-claude-code-providers_zh.md)
 
 ## 许可证
