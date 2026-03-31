@@ -14,7 +14,7 @@ pub fn run(env: &str, cwd: Option<PathBuf>, command: Vec<String>) -> Result<Exit
     let cwd = validate_cwd(&cwd, &manifest.shared_paths)?;
 
     let host: BTreeMap<String, String> = std::env::vars().collect();
-    let child_env = build_child_env(&manifest, &host, BTreeMap::new());
+    let child_env = build_child_env(&manifest, &host, BTreeMap::new(), None);
 
     let (program, args) = command
         .split_first()

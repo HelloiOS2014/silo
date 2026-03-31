@@ -86,8 +86,9 @@ mode = "default"
     host.insert("TERM".into(), "xterm-256color".into());
     host.insert("PATH".into(), "/usr/bin".into());
     host.insert("OPENAI_API_KEY".into(), "should-not-leak".into());
+    host.insert("HOME".into(), "/Users/test".into());
 
-    let env = build_child_env(&manifest, &host, BTreeMap::new());
+    let env = build_child_env(&manifest, &host, BTreeMap::new(), None);
     assert_eq!(env["AI_ENV"], "work");
     assert_eq!(env["HOME"], "/tmp/work/home");
     assert_eq!(env["XDG_CONFIG_HOME"], "/tmp/work/config");
@@ -282,4 +283,134 @@ fn envfile_accepts_strict_permissions() {
 
     let secrets = resolve_from_envfile(&envfile, &["KEY".into()]).unwrap();
     assert_eq!(secrets["KEY"], "value");
+}
+
+#[test]
+fn forced_vars_cannot_be_overridden_by_env_set() {
+    let raw = r#"
+id = "work"
+root = "/tmp/work"
+[env]
+allow = []
+[env.set]
+XDG_DATA_HOME = "/bad"
+"#;
+    let err = Manifest::parse(raw).unwrap_err();
+    assert!(err.to_string().contains("reserved"));
+}
+
+#[test]
+fn builds_env_with_xdg_data_and_state() {
+    let manifest = Manifest::parse(r#"
+id = "work"
+root = "/tmp/work"
+[env]
+allow = ["TERM"]
+[env.set]
+AI_ENV = "work"
+"#).unwrap();
+
+    let mut host = BTreeMap::new();
+    host.insert("TERM".into(), "xterm".into());
+    host.insert("HOME".into(), "/Users/test".into());
+
+    let env = build_child_env(&manifest, &host, BTreeMap::new(), None);
+    assert_eq!(env["XDG_DATA_HOME"], "/tmp/work/data");
+    assert_eq!(env["XDG_STATE_HOME"], "/tmp/work/state");
+    assert_eq!(env["HOME"], "/tmp/work/home");
+    assert_eq!(env["AIENV_ROOT"], "/Users/test/.aienv");
+}
+
+#[test]
+fn deny_overrides_allow_when_both_present() {
+    let manifest = Manifest::parse(r#"
+id = "work"
+root = "/tmp/work"
+[env]
+allow = ["TERM", "SECRET"]
+deny = ["SECRET"]
+"#).unwrap();
+
+    let mut host = BTreeMap::new();
+    host.insert("TERM".into(), "xterm".into());
+    host.insert("SECRET".into(), "should-not-leak".into());
+    host.insert("HOME".into(), "/Users/test".into());
+
+    let env = build_child_env(&manifest, &host, BTreeMap::new(), None);
+    assert_eq!(env["TERM"], "xterm");
+    assert!(!env.contains_key("SECRET"));
+}
+
+#[test]
+fn network_offline_injects_proxy_vars() {
+    let manifest = Manifest::parse(r#"
+id = "work"
+root = "/tmp/work"
+[env]
+allow = []
+[network]
+mode = "offline"
+"#).unwrap();
+
+    let mut host = BTreeMap::new();
+    host.insert("HOME".into(), "/Users/test".into());
+
+    let env = build_child_env(&manifest, &host, BTreeMap::new(), None);
+    assert_eq!(env["http_proxy"], "http://127.0.0.1:1");
+    assert_eq!(env["https_proxy"], "http://127.0.0.1:1");
+    assert_eq!(env["ALL_PROXY"], "http://127.0.0.1:1");
+}
+
+#[test]
+fn network_proxy_injects_custom_url() {
+    let manifest = Manifest::parse(r#"
+id = "work"
+root = "/tmp/work"
+[env]
+allow = []
+[network]
+mode = "proxy"
+proxy_url = "http://proxy.local:8080"
+"#).unwrap();
+
+    let mut host = BTreeMap::new();
+    host.insert("HOME".into(), "/Users/test".into());
+
+    let env = build_child_env(&manifest, &host, BTreeMap::new(), None);
+    assert_eq!(env["http_proxy"], "http://proxy.local:8080");
+    assert_eq!(env["https_proxy"], "http://proxy.local:8080");
+    assert_eq!(env["ALL_PROXY"], "http://proxy.local:8080");
+}
+
+#[test]
+fn aienv_root_preserves_existing_value() {
+    let manifest = Manifest::parse(r#"
+id = "work"
+root = "/tmp/work"
+[env]
+allow = []
+"#).unwrap();
+
+    let mut host = BTreeMap::new();
+    host.insert("HOME".into(), "/Users/test".into());
+    host.insert("AIENV_ROOT".into(), "/custom/aienv".into());
+
+    let env = build_child_env(&manifest, &host, BTreeMap::new(), None);
+    assert_eq!(env["AIENV_ROOT"], "/custom/aienv");
+}
+
+#[test]
+fn aienv_exec_dir_injected_when_provided() {
+    let manifest = Manifest::parse(r#"
+id = "work"
+root = "/tmp/work"
+[env]
+allow = []
+"#).unwrap();
+
+    let mut host = BTreeMap::new();
+    host.insert("HOME".into(), "/Users/test".into());
+
+    let env = build_child_env(&manifest, &host, BTreeMap::new(), Some("/tmp/work/run/12345"));
+    assert_eq!(env["AIENV_EXEC_DIR"], "/tmp/work/run/12345");
 }
