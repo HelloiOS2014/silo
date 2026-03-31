@@ -39,9 +39,18 @@ jobs:
       - name: Build release
         run: cargo build --release
 
+      - name: Prepare binary
+        run: |
+          ARCH=$(uname -m)
+          if [[ "$ARCH" == "arm64" ]]; then
+            mv target/release/silo silo-macos-arm64
+          else
+            mv target/release/silo silo-macos-x86_64
+          fi
+
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
         with:
-          files: target/release/silo
+          files: silo-macos-*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -11,7 +11,8 @@
       "Bash(git push:*)",
       "Bash(curl -s https://api.github.com/repos/HelloiOS2014/silo/releases/latest)",
       "Bash(gh release:*)",
-      "Bash(gh auth:*)"
+      "Bash(gh auth:*)",
+      "Bash(git tag:*)"
     ]
   }
 }
