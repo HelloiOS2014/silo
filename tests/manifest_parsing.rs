@@ -160,3 +160,140 @@ mode = "default"
     let err = Manifest::parse(raw).unwrap_err();
     assert!(err.to_string().contains("extends"));
 }
+
+#[test]
+fn rejects_invalid_secrets_provider() {
+    let raw = r#"
+id = "work"
+root = "/tmp/work"
+[env]
+allow = []
+[secrets]
+provider = "bogus"
+[shell]
+program = "/bin/zsh"
+init = "env.zsh"
+[network]
+mode = "default"
+"#;
+    let err = Manifest::parse(raw).unwrap_err();
+    assert!(err.to_string().contains("secrets.provider"));
+}
+
+#[test]
+fn rejects_reserved_key_in_env_set() {
+    let raw = r#"
+id = "work"
+root = "/tmp/work"
+[env]
+allow = []
+[env.set]
+HOME = "/bad"
+[secrets]
+provider = "none"
+[shell]
+program = "/bin/zsh"
+init = "env.zsh"
+[network]
+mode = "default"
+"#;
+    let err = Manifest::parse(raw).unwrap_err();
+    assert!(err.to_string().contains("reserved"));
+}
+
+#[test]
+fn rejects_reserved_key_in_secrets_items() {
+    let raw = r#"
+id = "work"
+root = "/tmp/work"
+[env]
+allow = []
+[secrets]
+provider = "keychain"
+items = ["TMPDIR"]
+[shell]
+program = "/bin/zsh"
+init = "env.zsh"
+[network]
+mode = "default"
+"#;
+    let err = Manifest::parse(raw).unwrap_err();
+    assert!(err.to_string().contains("reserved"));
+}
+
+#[test]
+fn accepts_none_secrets_provider() {
+    let raw = r#"
+id = "work"
+root = "/tmp/work"
+[env]
+allow = []
+[secrets]
+provider = "none"
+[network]
+mode = "default"
+"#;
+    let manifest = Manifest::parse(raw).unwrap();
+    assert_eq!(manifest.secrets.provider, "none");
+}
+
+#[test]
+fn optional_sections_use_defaults() {
+    let raw = r#"
+id = "work"
+root = "/tmp/work"
+[env]
+allow = ["PATH"]
+"#;
+    let manifest = Manifest::parse(raw).unwrap();
+    assert_eq!(manifest.secrets.provider, "none");
+    assert_eq!(manifest.shell.program.to_string_lossy(), "/bin/zsh");
+    assert_eq!(manifest.shell.init.to_string_lossy(), "env.zsh");
+    assert_eq!(manifest.network.mode, "default");
+    assert!(manifest.network.proxy_url.is_none());
+}
+
+#[test]
+fn proxy_mode_requires_proxy_url() {
+    let raw = r#"
+id = "work"
+root = "/tmp/work"
+[env]
+allow = []
+[network]
+mode = "proxy"
+"#;
+    let err = Manifest::parse(raw).unwrap_err();
+    assert!(err.to_string().contains("proxy_url"));
+}
+
+#[test]
+fn proxy_mode_with_url_is_valid() {
+    let raw = r#"
+id = "work"
+root = "/tmp/work"
+[env]
+allow = []
+[network]
+mode = "proxy"
+proxy_url = "http://proxy.local:8080"
+"#;
+    let manifest = Manifest::parse(raw).unwrap();
+    assert_eq!(manifest.network.proxy_url.as_deref(), Some("http://proxy.local:8080"));
+}
+
+#[test]
+fn expands_tilde_in_root_path() {
+    let home = std::env::var("HOME").unwrap();
+    let raw = r#"
+id = "work"
+root = "~/.aienv/work"
+[env]
+allow = []
+"#;
+    let manifest = Manifest::parse(raw).unwrap();
+    assert_eq!(
+        manifest.root,
+        std::path::PathBuf::from(&home).join(".aienv/work")
+    );
+}
