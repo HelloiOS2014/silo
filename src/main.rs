@@ -4,6 +4,7 @@ use aienv::{
 };
 use anyhow::Result;
 use clap::Parser;
+use std::process::ExitStatus;
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
@@ -12,18 +13,34 @@ fn main() -> Result<()> {
         Commands::Init { env } => commands::init::run(&env)?,
         Commands::Exec {
             env,
-            tty: false,
+            tty: _,
             cwd,
             command,
         } => {
             let status = commands::exec::run(&env, cwd, command)?;
-            std::process::exit(status.code().unwrap_or(1));
+            std::process::exit(exit_code(&status));
         }
-        Commands::Exec { tty: true, .. } => todo!("tty path comes next"),
-        Commands::Shell { .. } => todo!("shell path comes next"),
-        Commands::Ls => todo!("ls comes later"),
-        Commands::Show { .. } => todo!("show comes later"),
+        Commands::Shell { env, cwd } => {
+            let code = commands::shell::run(&env, cwd)?;
+            std::process::exit(code);
+        }
+        Commands::Ls => commands::ls::run()?,
+        Commands::Show { env } => commands::show::run(&env)?,
     }
 
     Ok(())
+}
+
+fn exit_code(status: &ExitStatus) -> i32 {
+    #[cfg(unix)]
+    {
+        use std::os::unix::process::ExitStatusExt;
+        status
+            .code()
+            .unwrap_or_else(|| 128 + status.signal().unwrap_or(1))
+    }
+    #[cfg(not(unix))]
+    {
+        status.code().unwrap_or(1)
+    }
 }
