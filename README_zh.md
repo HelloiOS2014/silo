@@ -154,6 +154,10 @@ envfile 支持 dotenv 格式：`#` 注释、`export` 前缀、单双引号、双
    - `SILO_ROOT` — `~/.silo` 的路径（嵌套执行时保留已有值）
    - `SILO_EXEC_DIR` — 本次执行的运行时目录
 
+## 使用教程
+
+- [在隔离环境中配置不同源的 Claude Code（MiniMax、Kimi 等）](docs/guide-claude-code-providers.md)
+
 ## 许可证
 
 MIT

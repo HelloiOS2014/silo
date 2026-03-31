@@ -154,6 +154,10 @@ The child process starts with a **clean** environment (not inherited from host).
    - `SILO_ROOT` — path to `~/.silo` (preserved across nested execution)
    - `SILO_EXEC_DIR` — per-execution run directory
 
+## Guides
+
+- [Configure Claude Code with different API providers (MiniMax, Kimi, etc.)](docs/guide-claude-code-providers.md) (Chinese)
+
 ## License
 
 MIT
