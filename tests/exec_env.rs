@@ -1,4 +1,4 @@
-use aienv::secrets::{resolve_from_envfile, SecretProvider};
+use aienv::secrets::resolve_from_envfile;
 use aienv::{manifest::Manifest, path_policy::validate_cwd, runtime_env::build_child_env};
 use assert_cmd::Command;
 use predicates::prelude::*;
@@ -15,8 +15,11 @@ fn loads_only_requested_keys_from_envfile() {
     )
     .unwrap();
 
-    let _provider = SecretProvider::Envfile(&envfile);
-    let _unused_provider = SecretProvider::Keychain { service: "aienv.test" };
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&envfile, std::fs::Permissions::from_mode(0o600)).unwrap();
+    }
     let secrets = resolve_from_envfile(&envfile, &["OPENAI_API_KEY".into()]).unwrap();
     assert_eq!(secrets["OPENAI_API_KEY"], "one");
     assert!(!secrets.contains_key("ANTHROPIC_API_KEY"));
@@ -28,6 +31,12 @@ fn rejects_invalid_envfile_lines() {
     let envfile = dir.path().join("secrets.env");
     std::fs::write(&envfile, "OPENAI_API_KEY=one\nBROKEN_LINE\n").unwrap();
 
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&envfile, std::fs::Permissions::from_mode(0o600)).unwrap();
+    }
+
     let err = resolve_from_envfile(&envfile, &["OPENAI_API_KEY".into()]).unwrap_err();
     assert!(err.to_string().contains("invalid envfile line"));
 }
@@ -37,6 +46,12 @@ fn rejects_missing_requested_keys_from_envfile() {
     let dir = tempfile::TempDir::new().unwrap();
     let envfile = dir.path().join("secrets.env");
     std::fs::write(&envfile, "OPENAI_API_KEY=one\n").unwrap();
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&envfile, std::fs::Permissions::from_mode(0o600)).unwrap();
+    }
 
     let err = resolve_from_envfile(&envfile, &["ANTHROPIC_API_KEY".into()]).unwrap_err();
     assert!(err.to_string().contains("missing secret"));
@@ -149,4 +164,122 @@ fn exec_runs_command_in_environment_with_isolated_home() {
             env_root.join("home").display().to_string(),
         ))
         .stdout(predicate::str::contains("work"));
+}
+
+#[test]
+fn envfile_supports_comments_and_blank_lines() {
+    let dir = tempfile::TempDir::new().unwrap();
+    let envfile = dir.path().join("secrets.env");
+    std::fs::write(
+        &envfile,
+        "# this is a comment\n\nOPENAI_API_KEY=one\n# another comment\nGEMINI_KEY=two\n",
+    )
+    .unwrap();
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&envfile, std::fs::Permissions::from_mode(0o600)).unwrap();
+    }
+
+    let secrets =
+        resolve_from_envfile(&envfile, &["OPENAI_API_KEY".into(), "GEMINI_KEY".into()]).unwrap();
+    assert_eq!(secrets["OPENAI_API_KEY"], "one");
+    assert_eq!(secrets["GEMINI_KEY"], "two");
+}
+
+#[test]
+fn envfile_supports_export_prefix() {
+    let dir = tempfile::TempDir::new().unwrap();
+    let envfile = dir.path().join("secrets.env");
+    std::fs::write(&envfile, "export OPENAI_API_KEY=one\n").unwrap();
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&envfile, std::fs::Permissions::from_mode(0o600)).unwrap();
+    }
+
+    let secrets = resolve_from_envfile(&envfile, &["OPENAI_API_KEY".into()]).unwrap();
+    assert_eq!(secrets["OPENAI_API_KEY"], "one");
+}
+
+#[test]
+fn envfile_supports_double_quoted_values() {
+    let dir = tempfile::TempDir::new().unwrap();
+    let envfile = dir.path().join("secrets.env");
+    std::fs::write(&envfile, "KEY=\"hello world\"\nKEY2=\"line\\nbreak\"\n").unwrap();
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&envfile, std::fs::Permissions::from_mode(0o600)).unwrap();
+    }
+
+    let secrets =
+        resolve_from_envfile(&envfile, &["KEY".into(), "KEY2".into()]).unwrap();
+    assert_eq!(secrets["KEY"], "hello world");
+    assert_eq!(secrets["KEY2"], "line\nbreak");
+}
+
+#[test]
+fn envfile_supports_single_quoted_values() {
+    let dir = tempfile::TempDir::new().unwrap();
+    let envfile = dir.path().join("secrets.env");
+    std::fs::write(&envfile, "KEY='hello world'\nKEY2='no\\nescape'\n").unwrap();
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&envfile, std::fs::Permissions::from_mode(0o600)).unwrap();
+    }
+
+    let secrets =
+        resolve_from_envfile(&envfile, &["KEY".into(), "KEY2".into()]).unwrap();
+    assert_eq!(secrets["KEY"], "hello world");
+    assert_eq!(secrets["KEY2"], "no\\nescape");
+}
+
+#[test]
+fn envfile_trims_whitespace_around_key_and_value() {
+    let dir = tempfile::TempDir::new().unwrap();
+    let envfile = dir.path().join("secrets.env");
+    std::fs::write(&envfile, "  KEY  =  value  \n").unwrap();
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&envfile, std::fs::Permissions::from_mode(0o600)).unwrap();
+    }
+
+    let secrets = resolve_from_envfile(&envfile, &["KEY".into()]).unwrap();
+    assert_eq!(secrets["KEY"], "value");
+}
+
+#[cfg(unix)]
+#[test]
+fn envfile_rejects_open_permissions() {
+    let dir = tempfile::TempDir::new().unwrap();
+    let envfile = dir.path().join("secrets.env");
+    std::fs::write(&envfile, "KEY=value\n").unwrap();
+
+    use std::os::unix::fs::PermissionsExt;
+    std::fs::set_permissions(&envfile, std::fs::Permissions::from_mode(0o644)).unwrap();
+
+    let err = resolve_from_envfile(&envfile, &["KEY".into()]).unwrap_err();
+    assert!(err.to_string().contains("permissions"));
+}
+
+#[cfg(unix)]
+#[test]
+fn envfile_accepts_strict_permissions() {
+    let dir = tempfile::TempDir::new().unwrap();
+    let envfile = dir.path().join("secrets.env");
+    std::fs::write(&envfile, "KEY=value\n").unwrap();
+
+    use std::os::unix::fs::PermissionsExt;
+    std::fs::set_permissions(&envfile, std::fs::Permissions::from_mode(0o600)).unwrap();
+
+    let secrets = resolve_from_envfile(&envfile, &["KEY".into()]).unwrap();
+    assert_eq!(secrets["KEY"], "value");
 }
