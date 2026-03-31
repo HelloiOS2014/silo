@@ -165,9 +165,7 @@ impl Manifest {
         }
 
         if self.id.trim().is_empty() {
-            return Err(AienvError::ManifestValidation(
-                "id cannot be empty".into(),
-            ));
+            return Err(AienvError::ManifestValidation("id cannot be empty".into()));
         }
 
         // Validate secrets.provider

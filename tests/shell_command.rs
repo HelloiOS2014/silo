@@ -115,8 +115,7 @@ fn show_prints_resolved_config() {
     write_minimal_manifest(&env_root, "work");
 
     let mut cmd = Command::cargo_bin("aienv").unwrap();
-    cmd.env("HOME", home.path())
-        .args(["show", "--env", "work"]);
+    cmd.env("HOME", home.path()).args(["show", "--env", "work"]);
     cmd.assert()
         .success()
         .stdout(predicate::str::contains("Environment:"))

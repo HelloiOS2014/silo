@@ -54,11 +54,26 @@ pub fn run(env: &str) -> Result<()> {
     println!();
 
     println!("Directories:");
-    println!("  HOME             {}", manifest.root.join("home").display());
-    println!("  XDG_CONFIG_HOME  {}", manifest.root.join("config").display());
-    println!("  XDG_CACHE_HOME   {}", manifest.root.join("cache").display());
-    println!("  XDG_DATA_HOME    {}", manifest.root.join("data").display());
-    println!("  XDG_STATE_HOME   {}", manifest.root.join("state").display());
+    println!(
+        "  HOME             {}",
+        manifest.root.join("home").display()
+    );
+    println!(
+        "  XDG_CONFIG_HOME  {}",
+        manifest.root.join("config").display()
+    );
+    println!(
+        "  XDG_CACHE_HOME   {}",
+        manifest.root.join("cache").display()
+    );
+    println!(
+        "  XDG_DATA_HOME    {}",
+        manifest.root.join("data").display()
+    );
+    println!(
+        "  XDG_STATE_HOME   {}",
+        manifest.root.join("state").display()
+    );
     println!("  TMPDIR           {}", manifest.root.join("tmp").display());
 
     Ok(())

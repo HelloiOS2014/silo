@@ -54,14 +54,11 @@ pub fn build_child_env(
     env.insert("XDG_STATE_HOME".into(), join_str(&manifest.root, "state"));
     env.insert("TMPDIR".into(), join_str(&manifest.root, "tmp"));
 
-    let aienv_root = host
-        .get("AIENV_ROOT")
-        .cloned()
-        .unwrap_or_else(|| {
-            host.get("HOME")
-                .map(|h| format!("{h}/.aienv"))
-                .unwrap_or_default()
-        });
+    let aienv_root = host.get("AIENV_ROOT").cloned().unwrap_or_else(|| {
+        host.get("HOME")
+            .map(|h| format!("{h}/.aienv"))
+            .unwrap_or_default()
+    });
     env.insert("AIENV_ROOT".into(), aienv_root);
 
     env

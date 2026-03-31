@@ -219,8 +219,7 @@ fn envfile_supports_double_quoted_values() {
         std::fs::set_permissions(&envfile, std::fs::Permissions::from_mode(0o600)).unwrap();
     }
 
-    let secrets =
-        resolve_from_envfile(&envfile, &["KEY".into(), "KEY2".into()]).unwrap();
+    let secrets = resolve_from_envfile(&envfile, &["KEY".into(), "KEY2".into()]).unwrap();
     assert_eq!(secrets["KEY"], "hello world");
     assert_eq!(secrets["KEY2"], "line\nbreak");
 }
@@ -237,8 +236,7 @@ fn envfile_supports_single_quoted_values() {
         std::fs::set_permissions(&envfile, std::fs::Permissions::from_mode(0o600)).unwrap();
     }
 
-    let secrets =
-        resolve_from_envfile(&envfile, &["KEY".into(), "KEY2".into()]).unwrap();
+    let secrets = resolve_from_envfile(&envfile, &["KEY".into(), "KEY2".into()]).unwrap();
     assert_eq!(secrets["KEY"], "hello world");
     assert_eq!(secrets["KEY2"], "no\\nescape");
 }
@@ -303,14 +301,17 @@ XDG_DATA_HOME = "/bad"
 
 #[test]
 fn builds_env_with_xdg_data_and_state() {
-    let manifest = Manifest::parse(r#"
+    let manifest = Manifest::parse(
+        r#"
 id = "work"
 root = "/tmp/work"
 [env]
 allow = ["TERM"]
 [env.set]
 AI_ENV = "work"
-"#).unwrap();
+"#,
+    )
+    .unwrap();
 
     let mut host = BTreeMap::new();
     host.insert("TERM".into(), "xterm".into());
@@ -325,13 +326,16 @@ AI_ENV = "work"
 
 #[test]
 fn deny_overrides_allow_when_both_present() {
-    let manifest = Manifest::parse(r#"
+    let manifest = Manifest::parse(
+        r#"
 id = "work"
 root = "/tmp/work"
 [env]
 allow = ["TERM", "SECRET"]
 deny = ["SECRET"]
-"#).unwrap();
+"#,
+    )
+    .unwrap();
 
     let mut host = BTreeMap::new();
     host.insert("TERM".into(), "xterm".into());
@@ -345,14 +349,17 @@ deny = ["SECRET"]
 
 #[test]
 fn network_offline_injects_proxy_vars() {
-    let manifest = Manifest::parse(r#"
+    let manifest = Manifest::parse(
+        r#"
 id = "work"
 root = "/tmp/work"
 [env]
 allow = []
 [network]
 mode = "offline"
-"#).unwrap();
+"#,
+    )
+    .unwrap();
 
     let mut host = BTreeMap::new();
     host.insert("HOME".into(), "/Users/test".into());
@@ -365,7 +372,8 @@ mode = "offline"
 
 #[test]
 fn network_proxy_injects_custom_url() {
-    let manifest = Manifest::parse(r#"
+    let manifest = Manifest::parse(
+        r#"
 id = "work"
 root = "/tmp/work"
 [env]
@@ -373,7 +381,9 @@ allow = []
 [network]
 mode = "proxy"
 proxy_url = "http://proxy.local:8080"
-"#).unwrap();
+"#,
+    )
+    .unwrap();
 
     let mut host = BTreeMap::new();
     host.insert("HOME".into(), "/Users/test".into());
@@ -386,12 +396,15 @@ proxy_url = "http://proxy.local:8080"
 
 #[test]
 fn aienv_root_preserves_existing_value() {
-    let manifest = Manifest::parse(r#"
+    let manifest = Manifest::parse(
+        r#"
 id = "work"
 root = "/tmp/work"
 [env]
 allow = []
-"#).unwrap();
+"#,
+    )
+    .unwrap();
 
     let mut host = BTreeMap::new();
     host.insert("HOME".into(), "/Users/test".into());
@@ -403,17 +416,25 @@ allow = []
 
 #[test]
 fn aienv_exec_dir_injected_when_provided() {
-    let manifest = Manifest::parse(r#"
+    let manifest = Manifest::parse(
+        r#"
 id = "work"
 root = "/tmp/work"
 [env]
 allow = []
-"#).unwrap();
+"#,
+    )
+    .unwrap();
 
     let mut host = BTreeMap::new();
     host.insert("HOME".into(), "/Users/test".into());
 
-    let env = build_child_env(&manifest, &host, BTreeMap::new(), Some("/tmp/work/run/12345"));
+    let env = build_child_env(
+        &manifest,
+        &host,
+        BTreeMap::new(),
+        Some("/tmp/work/run/12345"),
+    );
     assert_eq!(env["AIENV_EXEC_DIR"], "/tmp/work/run/12345");
 }
 
@@ -509,9 +530,9 @@ mode = "default"
         "import os; print(os.getcwd())",
     ]);
 
-    cmd.assert().success().stdout(
-        predicate::str::contains(env_root.join("home").to_string_lossy().as_ref()),
-    );
+    cmd.assert().success().stdout(predicate::str::contains(
+        env_root.join("home").to_string_lossy().as_ref(),
+    ));
 }
 
 #[test]
@@ -535,14 +556,8 @@ allow = []
     .unwrap();
 
     let mut cmd = Command::cargo_bin("aienv").unwrap();
-    cmd.env("HOME", home.path()).args([
-        "exec",
-        "-e",
-        "work",
-        "--",
-        "echo",
-        "hi",
-    ]);
+    cmd.env("HOME", home.path())
+        .args(["exec", "-e", "work", "--", "echo", "hi"]);
 
     cmd.assert()
         .failure()

@@ -1,7 +1,11 @@
 use crate::manifest::Manifest;
 use crate::secrets;
-use anyhow::{bail, Context, Result};
-use std::{collections::BTreeMap, fs, path::{Path, PathBuf}};
+use anyhow::{Context, Result, bail};
+use std::{
+    collections::BTreeMap,
+    fs,
+    path::{Path, PathBuf},
+};
 
 pub fn aienv_root() -> Result<PathBuf> {
     if let Ok(root) = std::env::var("AIENV_ROOT") {
@@ -41,10 +45,7 @@ pub fn load_manifest(env: &str) -> Result<(Manifest, PathBuf)> {
     Ok((manifest, root))
 }
 
-pub fn resolve_secrets(
-    manifest: &Manifest,
-    env_root: &Path,
-) -> Result<BTreeMap<String, String>> {
+pub fn resolve_secrets(manifest: &Manifest, env_root: &Path) -> Result<BTreeMap<String, String>> {
     if manifest.secrets.items.is_empty() {
         return Ok(BTreeMap::new());
     }

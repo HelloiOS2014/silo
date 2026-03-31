@@ -1,4 +1,4 @@
-use anyhow::{anyhow, bail, Result};
+use anyhow::{Result, anyhow, bail};
 use std::{collections::BTreeMap, fs, path::Path, process::Command};
 
 /// On Unix, check that the envfile has no group or other permissions (mode & 0o077 == 0).

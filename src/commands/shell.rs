@@ -32,7 +32,11 @@ pub fn run(env: &str, cwd: Option<PathBuf>) -> Result<i32> {
     let host: BTreeMap<String, String> = std::env::vars().collect();
     let child_env = build_child_env(&manifest, &host, secrets, Some(&run_dir_str));
 
-    let args = build_shell_args(&manifest.shell.program, &manifest.root, &manifest.shell.init);
+    let args = build_shell_args(
+        &manifest.shell.program,
+        &manifest.root,
+        &manifest.shell.init,
+    );
 
     let status = Command::new(&args[0])
         .args(&args[1..])

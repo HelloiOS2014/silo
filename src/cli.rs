@@ -2,7 +2,11 @@ use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
 #[derive(Debug, Parser)]
-#[command(name = "aienv", version, about = "Run commands inside isolated AI identity environments")]
+#[command(
+    name = "aienv",
+    version,
+    about = "Run commands inside isolated AI identity environments"
+)]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,

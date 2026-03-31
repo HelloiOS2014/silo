@@ -32,9 +32,7 @@ pub fn run(env: &str, cwd: Option<PathBuf>, command: Vec<String>) -> Result<Exit
     let host: BTreeMap<String, String> = std::env::vars().collect();
     let child_env = build_child_env(&manifest, &host, secrets, Some(&run_dir_str));
 
-    let (program, args) = command
-        .split_first()
-        .context("command cannot be empty")?;
+    let (program, args) = command.split_first().context("command cannot be empty")?;
 
     let status = Command::new(program)
         .args(args)

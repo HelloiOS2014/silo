@@ -1,6 +1,6 @@
 use crate::{env_path, manifest::Manifest};
-use anyhow::{anyhow, Result};
-use std::{fs, path::PathBuf};
+use anyhow::{Result, anyhow};
+use std::fs;
 
 pub fn run(env: &str) -> Result<()> {
     validate_env_name(env)?;
@@ -47,7 +47,10 @@ fn validate_env_name(env: &str) -> Result<()> {
         return Err(anyhow!("environment name cannot be empty"));
     }
 
-    if env.chars().all(|ch| ch.is_ascii_alphanumeric() || ch == '-' || ch == '_') {
+    if env
+        .chars()
+        .all(|ch| ch.is_ascii_alphanumeric() || ch == '-' || ch == '_')
+    {
         Ok(())
     } else {
         Err(anyhow!(
@@ -56,7 +59,7 @@ fn validate_env_name(env: &str) -> Result<()> {
     }
 }
 
-fn default_manifest(env: &str, root: &PathBuf) -> String {
+fn default_manifest(env: &str, root: &std::path::Path) -> String {
     format!(
         r#"id = "{env}"
 root = "{root}"

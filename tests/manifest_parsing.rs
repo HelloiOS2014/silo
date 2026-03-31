@@ -279,7 +279,10 @@ mode = "proxy"
 proxy_url = "http://proxy.local:8080"
 "#;
     let manifest = Manifest::parse(raw).unwrap();
-    assert_eq!(manifest.network.proxy_url.as_deref(), Some("http://proxy.local:8080"));
+    assert_eq!(
+        manifest.network.proxy_url.as_deref(),
+        Some("http://proxy.local:8080")
+    );
 }
 
 #[test]
