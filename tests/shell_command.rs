@@ -35,12 +35,12 @@ mode = "default"
 #[test]
 fn ls_lists_initialized_environments() {
     let home = TempDir::new().unwrap();
-    let aienv = home.path().join(".aienv");
+    let silo_dir = home.path().join(".silo");
 
-    write_minimal_manifest(&aienv.join("alpha"), "alpha");
-    write_minimal_manifest(&aienv.join("beta"), "beta");
+    write_minimal_manifest(&silo_dir.join("alpha"), "alpha");
+    write_minimal_manifest(&silo_dir.join("beta"), "beta");
 
-    let mut cmd = Command::cargo_bin("aienv").unwrap();
+    let mut cmd = Command::cargo_bin("silo").unwrap();
     cmd.env("HOME", home.path()).arg("ls");
     cmd.assert()
         .success()
@@ -52,14 +52,14 @@ fn ls_lists_initialized_environments() {
 fn ls_shows_nothing_when_no_environments() {
     let home = TempDir::new().unwrap();
 
-    let mut cmd = Command::cargo_bin("aienv").unwrap();
+    let mut cmd = Command::cargo_bin("silo").unwrap();
     cmd.env("HOME", home.path()).arg("ls");
     cmd.assert().success().stdout(predicate::str::is_empty());
 }
 
 #[test]
 fn shell_command_builds_correct_zsh_args() {
-    use aienv::commands::shell::build_shell_args;
+    use silo::commands::shell::build_shell_args;
 
     let args = build_shell_args(
         std::path::Path::new("/bin/zsh"),
@@ -78,7 +78,7 @@ fn shell_command_builds_correct_zsh_args() {
 
 #[test]
 fn shell_command_builds_correct_bash_args() {
-    use aienv::commands::shell::build_shell_args;
+    use silo::commands::shell::build_shell_args;
 
     let args = build_shell_args(
         std::path::Path::new("/bin/bash"),
@@ -94,7 +94,7 @@ fn shell_command_builds_correct_bash_args() {
 
 #[test]
 fn shell_command_builds_generic_args_for_unknown_shell() {
-    use aienv::commands::shell::build_shell_args;
+    use silo::commands::shell::build_shell_args;
 
     let args = build_shell_args(
         std::path::Path::new("/bin/fish"),
@@ -111,10 +111,10 @@ fn shell_command_builds_generic_args_for_unknown_shell() {
 #[test]
 fn show_prints_resolved_config() {
     let home = TempDir::new().unwrap();
-    let env_root = home.path().join(".aienv").join("work");
+    let env_root = home.path().join(".silo").join("work");
     write_minimal_manifest(&env_root, "work");
 
-    let mut cmd = Command::cargo_bin("aienv").unwrap();
+    let mut cmd = Command::cargo_bin("silo").unwrap();
     cmd.env("HOME", home.path()).args(["show", "--env", "work"]);
     cmd.assert()
         .success()

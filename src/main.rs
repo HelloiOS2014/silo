@@ -1,4 +1,4 @@
-use aienv::{
+use silo::{
     cli::{Cli, Commands},
     commands,
 };

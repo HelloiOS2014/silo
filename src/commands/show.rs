@@ -37,7 +37,7 @@ pub fn run(env: &str) -> Result<()> {
     println!();
 
     let provider_display = match manifest.secrets.provider.as_str() {
-        "keychain" => format!("keychain (aienv.{})", manifest.id),
+        "keychain" => format!("keychain (silo.{})", manifest.id),
         "envfile" => format!("envfile ({})", env_root.join("secrets.env").display()),
         other => other.to_string(),
     };

@@ -9,7 +9,7 @@ const RESERVED_KEYS: &[&str] = &[
     "XDG_DATA_HOME",
     "XDG_STATE_HOME",
     "TMPDIR",
-    "AIENV_ROOT",
+    "SILO_ROOT",
 ];
 
 #[derive(Debug, Clone, Deserialize)]

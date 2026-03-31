@@ -7,16 +7,16 @@ use std::{
     path::{Path, PathBuf},
 };
 
-pub fn aienv_root() -> Result<PathBuf> {
-    if let Ok(root) = std::env::var("AIENV_ROOT") {
+pub fn silo_root() -> Result<PathBuf> {
+    if let Ok(root) = std::env::var("SILO_ROOT") {
         return Ok(PathBuf::from(root));
     }
     let home = std::env::var("HOME").context("HOME not set")?;
-    Ok(PathBuf::from(home).join(".aienv"))
+    Ok(PathBuf::from(home).join(".silo"))
 }
 
 pub fn env_root(env: &str) -> Result<PathBuf> {
-    Ok(aienv_root()?.join(env))
+    Ok(silo_root()?.join(env))
 }
 
 pub fn load_manifest(env: &str) -> Result<(Manifest, PathBuf)> {
@@ -60,7 +60,7 @@ pub fn resolve_secrets(manifest: &Manifest, env_root: &Path) -> Result<BTreeMap<
             secrets::resolve_from_envfile(&path, &manifest.secrets.items)
         }
         "keychain" => {
-            let service = format!("aienv.{}", manifest.id);
+            let service = format!("silo.{}", manifest.id);
             secrets::resolve_from_keychain(&service, &manifest.secrets.items)
         }
         other => bail!("unknown secrets provider: {other}"),

@@ -3,7 +3,7 @@ use anyhow::Result;
 use std::fs;
 
 pub fn run() -> Result<()> {
-    let root = env_path::aienv_root()?;
+    let root = env_path::silo_root()?;
     if !root.exists() {
         return Ok(());
     }

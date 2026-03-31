@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 #[derive(Debug, Parser)]
 #[command(
-    name = "aienv",
+    name = "silo",
     version,
     about = "Run commands inside isolated AI identity environments"
 )]

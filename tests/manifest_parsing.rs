@@ -1,4 +1,4 @@
-use aienv::manifest::Manifest;
+use silo::manifest::Manifest;
 
 #[test]
 fn parses_minimal_manifest() {
@@ -290,13 +290,13 @@ fn expands_tilde_in_root_path() {
     let home = std::env::var("HOME").unwrap();
     let raw = r#"
 id = "work"
-root = "~/.aienv/work"
+root = "~/.silo/work"
 [env]
 allow = []
 "#;
     let manifest = Manifest::parse(raw).unwrap();
     assert_eq!(
         manifest.root,
-        std::path::PathBuf::from(&home).join(".aienv/work")
+        std::path::PathBuf::from(&home).join(".silo/work")
     );
 }

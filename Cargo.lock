@@ -12,20 +12,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "aienv"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "assert_cmd",
- "clap",
- "predicates",
- "serde",
- "tempfile",
- "thiserror",
- "toml",
-]
-
-[[package]]
 name = "anstream"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -497,6 +483,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "876ac351060d4f882bb1032b6369eb0aef79ad9df1ea8bc404874d8cc3d0cd98"
 dependencies = [
  "serde_core",
+]
+
+[[package]]
+name = "silo"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "assert_cmd",
+ "clap",
+ "predicates",
+ "serde",
+ "tempfile",
+ "thiserror",
+ "toml",
 ]
 
 [[package]]

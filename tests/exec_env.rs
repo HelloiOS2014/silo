@@ -1,5 +1,5 @@
-use aienv::secrets::resolve_from_envfile;
-use aienv::{manifest::Manifest, path_policy::validate_cwd, runtime_env::build_child_env};
+use silo::secrets::resolve_from_envfile;
+use silo::{manifest::Manifest, path_policy::validate_cwd, runtime_env::build_child_env};
 use assert_cmd::Command;
 use predicates::prelude::*;
 use std::{collections::BTreeMap, fs, path::PathBuf};
@@ -132,7 +132,7 @@ fn rejects_invalid_shared_paths() {
 #[test]
 fn exec_runs_command_in_environment_with_isolated_home() {
     let home = TempDir::new().unwrap();
-    let env_root = home.path().join(".aienv").join("work");
+    let env_root = home.path().join(".silo").join("work");
     fs::create_dir_all(env_root.join("home")).unwrap();
     fs::create_dir_all(env_root.join("config")).unwrap();
     fs::create_dir_all(env_root.join("cache")).unwrap();
@@ -150,7 +150,7 @@ fn exec_runs_command_in_environment_with_isolated_home() {
     .unwrap();
     fs::write(env_root.join("env.zsh"), "export AI_ENV=work\n").unwrap();
 
-    let mut cmd = Command::cargo_bin("aienv").unwrap();
+    let mut cmd = Command::cargo_bin("silo").unwrap();
     cmd.env("HOME", home.path()).args([
         "exec",
         "--env",
@@ -321,7 +321,7 @@ AI_ENV = "work"
     assert_eq!(env["XDG_DATA_HOME"], "/tmp/work/data");
     assert_eq!(env["XDG_STATE_HOME"], "/tmp/work/state");
     assert_eq!(env["HOME"], "/tmp/work/home");
-    assert_eq!(env["AIENV_ROOT"], "/Users/test/.aienv");
+    assert_eq!(env["SILO_ROOT"], "/Users/test/.silo");
 }
 
 #[test]
@@ -395,7 +395,7 @@ proxy_url = "http://proxy.local:8080"
 }
 
 #[test]
-fn aienv_root_preserves_existing_value() {
+fn silo_root_preserves_existing_value() {
     let manifest = Manifest::parse(
         r#"
 id = "work"
@@ -408,14 +408,14 @@ allow = []
 
     let mut host = BTreeMap::new();
     host.insert("HOME".into(), "/Users/test".into());
-    host.insert("AIENV_ROOT".into(), "/custom/aienv".into());
+    host.insert("SILO_ROOT".into(), "/custom/silo".into());
 
     let env = build_child_env(&manifest, &host, BTreeMap::new(), None);
-    assert_eq!(env["AIENV_ROOT"], "/custom/aienv");
+    assert_eq!(env["SILO_ROOT"], "/custom/silo");
 }
 
 #[test]
-fn aienv_exec_dir_injected_when_provided() {
+fn silo_exec_dir_injected_when_provided() {
     let manifest = Manifest::parse(
         r#"
 id = "work"
@@ -435,13 +435,13 @@ allow = []
         BTreeMap::new(),
         Some("/tmp/work/run/12345"),
     );
-    assert_eq!(env["AIENV_EXEC_DIR"], "/tmp/work/run/12345");
+    assert_eq!(env["SILO_EXEC_DIR"], "/tmp/work/run/12345");
 }
 
 #[test]
 fn exec_injects_envfile_secrets_into_child_process() {
     let home = TempDir::new().unwrap();
-    let env_root = home.path().join(".aienv").join("work");
+    let env_root = home.path().join(".silo").join("work");
     for dir in ["home", "config", "cache", "data", "state", "tmp", "run"] {
         fs::create_dir_all(env_root.join(dir)).unwrap();
     }
@@ -477,7 +477,7 @@ mode = "default"
         fs::set_permissions(&secrets_path, fs::Permissions::from_mode(0o600)).unwrap();
     }
 
-    let mut cmd = Command::cargo_bin("aienv").unwrap();
+    let mut cmd = Command::cargo_bin("silo").unwrap();
     cmd.env("HOME", home.path()).args([
         "exec",
         "-e",
@@ -496,7 +496,7 @@ mode = "default"
 #[test]
 fn exec_with_inherit_cwd_false_uses_env_home() {
     let home = TempDir::new().unwrap();
-    let env_root = home.path().join(".aienv").join("work");
+    let env_root = home.path().join(".silo").join("work");
     for dir in ["home", "config", "cache", "data", "state", "tmp", "run"] {
         fs::create_dir_all(env_root.join(dir)).unwrap();
     }
@@ -519,7 +519,7 @@ mode = "default"
     .unwrap();
     fs::write(env_root.join("env.zsh"), "").unwrap();
 
-    let mut cmd = Command::cargo_bin("aienv").unwrap();
+    let mut cmd = Command::cargo_bin("silo").unwrap();
     cmd.env("HOME", home.path()).args([
         "exec",
         "-e",
@@ -538,7 +538,7 @@ mode = "default"
 #[test]
 fn exec_rejects_mismatched_manifest_id() {
     let home = TempDir::new().unwrap();
-    let env_root = home.path().join(".aienv").join("work");
+    let env_root = home.path().join(".silo").join("work");
     for dir in ["home", "config", "cache", "data", "state", "tmp", "run"] {
         fs::create_dir_all(env_root.join(dir)).unwrap();
     }
@@ -555,7 +555,7 @@ allow = []
     )
     .unwrap();
 
-    let mut cmd = Command::cargo_bin("aienv").unwrap();
+    let mut cmd = Command::cargo_bin("silo").unwrap();
     cmd.env("HOME", home.path())
         .args(["exec", "-e", "work", "--", "echo", "hi"]);
 

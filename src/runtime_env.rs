@@ -43,7 +43,7 @@ pub fn build_child_env(
 
     // 5. exec dir
     if let Some(dir) = exec_dir {
-        env.insert("AIENV_EXEC_DIR".into(), dir.to_string());
+        env.insert("SILO_EXEC_DIR".into(), dir.to_string());
     }
 
     // 6. Forced variables (last — cannot be overridden)
@@ -54,12 +54,12 @@ pub fn build_child_env(
     env.insert("XDG_STATE_HOME".into(), join_str(&manifest.root, "state"));
     env.insert("TMPDIR".into(), join_str(&manifest.root, "tmp"));
 
-    let aienv_root = host.get("AIENV_ROOT").cloned().unwrap_or_else(|| {
+    let silo_root = host.get("SILO_ROOT").cloned().unwrap_or_else(|| {
         host.get("HOME")
-            .map(|h| format!("{h}/.aienv"))
+            .map(|h| format!("{h}/.silo"))
             .unwrap_or_default()
     });
-    env.insert("AIENV_ROOT".into(), aienv_root);
+    env.insert("SILO_ROOT".into(), silo_root);
 
     env
 }
