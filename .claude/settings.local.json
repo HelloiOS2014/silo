@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /Users/JOYY/code/ToolSpaces/silo log --oneline -10)",
+      "Bash(git -C /Users/JOYY/code/ToolSpaces/silo tag --list)",
+      "Bash(rustc --version)",
+      "Bash(cargo fmt:*)",
+      "Bash(rustup default:*)"
+    ]
+  }
+}

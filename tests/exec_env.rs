@@ -1,7 +1,7 @@
-use silo::secrets::resolve_from_envfile;
-use silo::{manifest::Manifest, path_policy::validate_cwd, runtime_env::build_child_env};
 use assert_cmd::Command;
 use predicates::prelude::*;
+use silo::secrets::resolve_from_envfile;
+use silo::{manifest::Manifest, path_policy::validate_cwd, runtime_env::build_child_env};
 use std::{collections::BTreeMap, fs, path::PathBuf};
 use tempfile::TempDir;
 
