@@ -51,6 +51,9 @@ silo shell -e work
 # List environments
 silo ls
 
+# Run setup hooks (install tools, init configs)
+silo setup -e work
+
 # Inspect resolved config
 silo show -e work
 ```
@@ -78,6 +81,15 @@ Enter an interactive shell in the environment. Host shell rc files are suppresse
 ### `silo ls`
 
 List all initialized environments.
+
+### `silo setup -e <name> [--force]`
+
+Run setup hooks defined in `[setup].on_init` inside the isolated environment. Tracks completion with a `.setup-done` marker; use `--force` to re-run.
+
+```bash
+silo setup -e work          # run once
+silo setup -e work --force  # re-run after updating on_init
+```
 
 ### `silo show -e <name>`
 
@@ -126,6 +138,13 @@ init = "env.zsh"
 [network]                              # default: mode = "default"
 mode = "default"                       # default | offline | proxy
 # proxy_url = "http://proxy:8080"      # required when mode = "proxy"
+
+[setup]                                # default: on_init = []
+on_init = [
+  "ios-pilot config init",
+  "mkdir -p $HOME/.claude/skills",
+  "cp -n $SILO_HOST_HOME/.claude/skills/ios-pilot/SKILL.md $HOME/.claude/skills/ios-pilot/",
+]
 ```
 
 Tilde expansion (`~/`) is supported in `root` and `shared_paths`.
@@ -174,10 +193,12 @@ The child process starts with a **clean** environment (not inherited from host).
 5. **Forced variables** (always set, cannot be overridden):
    - `HOME`, `XDG_CONFIG_HOME`, `XDG_CACHE_HOME`, `XDG_DATA_HOME`, `XDG_STATE_HOME`, `TMPDIR` — point to environment directories
    - `SILO_ROOT` — path to `~/.silo` (preserved across nested execution)
+   - `SILO_HOST_HOME` — the real host HOME (for setup scripts that need host file access)
    - `SILO_EXEC_DIR` — per-execution run directory
 
 ## Guides
 
+- [Tool Installation in Silo Environments](docs/guide-tool-setup.md) — patterns for ios-pilot, lark-cli, npm packages, OAuth tools, and more
 - [Configure Claude Code with different API providers (MiniMax, Kimi, etc.)](docs/guide-claude-code-providers.md)
 
 ## License

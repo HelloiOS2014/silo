@@ -49,6 +49,9 @@ silo shell -e work
 # 列出所有环境
 silo ls
 
+# 运行 setup 钩子（安装工具、初始化配置）
+silo setup -e work
+
 # 查看生效配置
 silo show -e work
 ```
@@ -76,6 +79,15 @@ silo exec -e cn -- bash -lc 'gemini -p "分析当前目录"'
 ### `silo ls`
 
 列出所有已初始化的环境。
+
+### `silo setup -e <名称> [--force]`
+
+执行 manifest 中 `[setup].on_init` 定义的初始化钩子。首次执行后记录 `.setup-done` 标记；使用 `--force` 可重新执行。
+
+```bash
+silo setup -e work          # 首次运行
+silo setup -e work --force  # 修改 on_init 后重跑
+```
 
 ### `silo show -e <名称>`
 
@@ -124,6 +136,13 @@ init = "env.zsh"
 [network]                              # 默认: mode = "default"
 mode = "default"                       # default | offline | proxy
 # proxy_url = "http://proxy:8080"      # mode = "proxy" 时必填
+
+[setup]                                # 默认: on_init = []
+on_init = [
+  "ios-pilot config init",
+  "mkdir -p $HOME/.claude/skills",
+  "cp -n $SILO_HOST_HOME/.claude/skills/ios-pilot/SKILL.md $HOME/.claude/skills/ios-pilot/",
+]
 ```
 
 `root` 和 `shared_paths` 支持波浪号展开（`~/`）。
@@ -174,10 +193,12 @@ envfile 支持 dotenv 格式：`#` 注释、`export` 前缀、单双引号、双
 5. **强制变量**（最后写入，不可覆盖）：
    - `HOME`、`XDG_CONFIG_HOME`、`XDG_CACHE_HOME`、`XDG_DATA_HOME`、`XDG_STATE_HOME`、`TMPDIR` — 指向环境目录
    - `SILO_ROOT` — `~/.silo` 的路径（嵌套执行时保留已有值）
+   - `SILO_HOST_HOME` — 宿主机的真实 HOME 路径（供 setup 脚本引用宿主机文件）
    - `SILO_EXEC_DIR` — 本次执行的运行时目录
 
 ## 使用教程
 
+- [在隔离环境中安装和配置工具](docs/guide-tool-setup.md) — ios-pilot、lark-cli、npm 包、OAuth 工具等安装模式
 - [在隔离环境中配置不同源的 Claude Code（MiniMax、Kimi 等）](docs/guide-claude-code-providers_zh.md)
 
 ## 许可证
