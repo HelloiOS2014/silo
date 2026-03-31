@@ -28,6 +28,12 @@ cargo build --release && cp target/release/silo ~/.local/bin/silo
 
 需要 Rust 1.85+（edition 2024）。
 
+安装完成后，如果 `~/.local/bin` 不在 PATH 中，需要添加：
+
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+```
+
 ## 快速上手
 
 ```bash
