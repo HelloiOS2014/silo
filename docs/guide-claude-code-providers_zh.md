@@ -199,9 +199,10 @@ silo exec -e anthropic -- claude
 
 MiniMax 提供专属 MCP server，具备**网络搜索**和**图片理解**能力。
 
-**前置条件：** 先安装 [uv](https://docs.astral.sh/uv/)：
+**前置条件：** 宿主机需要安装 [uv](https://docs.astral.sh/uv/)。如果已经装过，**不需要在隔离环境中重新安装**——silo 默认继承宿主机的 PATH，`uv`、`uvx`、`npx`、`node`、`python` 等工具在隔离环境中直接可用。
 
 ```bash
+# 在宿主机安装 uv（已安装则跳过）
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 

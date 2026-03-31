@@ -199,9 +199,10 @@ Since silo isolates HOME, each environment has its own `~/.claude/settings.json`
 
 MiniMax provides an MCP server with **web search** and **image understanding** capabilities.
 
-**Prerequisites:** Install [uv](https://docs.astral.sh/uv/) first:
+**Prerequisites:** [uv](https://docs.astral.sh/uv/) must be installed on the host machine. If you already have it, there's no need to install it again inside the silo environment — silo inherits PATH from the host by default, so tools like `uv`, `uvx`, `npx`, `node`, and `python` are all available inside isolated environments.
 
 ```bash
+# Install uv on the host (skip if already installed)
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
