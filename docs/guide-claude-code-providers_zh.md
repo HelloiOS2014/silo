@@ -191,6 +191,91 @@ chmod 600 ~/.silo/anthropic/secrets.env
 silo exec -e anthropic -- claude
 ```
 
+## 配置 MCP Server
+
+由于 silo 隔离了 HOME，每个环境有自己独立的 `~/.claude/settings.json`，MCP 配置天然隔离——在 `minimax` 环境配的 MCP server 不会出现在 `kimi` 环境中。
+
+### MiniMax MCP Server
+
+MiniMax 提供专属 MCP server，具备**网络搜索**和**图片理解**能力。
+
+**前置条件：** 先安装 [uv](https://docs.astral.sh/uv/)：
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+**方式一：通过 `silo shell` + `claude mcp add`**
+
+```bash
+silo shell -e minimax
+
+# 在隔离 shell 中：
+claude mcp add minimax -- uvx minimax-coding-plan-mcp -y
+
+exit
+```
+
+然后手动添加环境变量到 MCP 配置。编辑 `~/.silo/minimax/home/.claude/settings.json`：
+
+```json
+{
+  "mcpServers": {
+    "minimax": {
+      "command": "uvx",
+      "args": ["minimax-coding-plan-mcp", "-y"],
+      "env": {
+        "MINIMAX_API_KEY": "你的MiniMax API Key",
+        "MINIMAX_API_HOST": "https://api.minimaxi.com"
+      }
+    }
+  }
+}
+```
+
+**方式二：直接编辑 settings.json**
+
+```bash
+mkdir -p ~/.silo/minimax/home/.claude
+cat > ~/.silo/minimax/home/.claude/settings.json << 'EOF'
+{
+  "mcpServers": {
+    "minimax": {
+      "command": "uvx",
+      "args": ["minimax-coding-plan-mcp", "-y"],
+      "env": {
+        "MINIMAX_API_KEY": "你的MiniMax API Key",
+        "MINIMAX_API_HOST": "https://api.minimaxi.com"
+      }
+    }
+  }
+}
+EOF
+```
+
+**验证：** 启动 Claude Code 后输入 `/mcp` 确认 MiniMax 工具可用：
+
+```bash
+silo exec -e minimax -- claude
+# 输入: /mcp
+```
+
+应该能看到 `web_search` 和 `understand_image` 两个工具。
+
+> **说明：** MCP server 的 API Key 通过 MCP 配置的 `env` 字段传递，不需要加到 silo manifest 的 secrets 中。这是因为 Claude Code 从自己的 settings 读取 MCP 环境变量，而非从进程环境中读取。
+
+### 其他厂商的 MCP Server
+
+同样的模式适用于任何 MCP server。进入环境的 shell，添加 MCP server，配置自动隔离：
+
+```bash
+silo shell -e <环境名>
+claude mcp add <server名> -- <命令> [参数...]
+exit
+```
+
+或直接编辑 `~/.silo/<环境名>/home/.claude/settings.json`。
+
 ## 日常使用
 
 配置完成后，日常切换只需一条命令：

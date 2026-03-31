@@ -191,6 +191,91 @@ chmod 600 ~/.silo/anthropic/secrets.env
 silo exec -e anthropic -- claude
 ```
 
+## Configuring MCP Servers
+
+Since silo isolates HOME, each environment has its own `~/.claude/settings.json`. MCP server configurations are automatically isolated per environment — a server configured in `minimax` won't appear in `kimi`.
+
+### MiniMax MCP Server
+
+MiniMax provides an MCP server with **web search** and **image understanding** capabilities.
+
+**Prerequisites:** Install [uv](https://docs.astral.sh/uv/) first:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+**Option 1: Via `silo shell` + `claude mcp add`**
+
+```bash
+silo shell -e minimax
+
+# Inside the isolated shell:
+claude mcp add minimax -- uvx minimax-coding-plan-mcp -y
+
+exit
+```
+
+Then manually add the environment variables to the MCP config. Edit `~/.silo/minimax/home/.claude/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "minimax": {
+      "command": "uvx",
+      "args": ["minimax-coding-plan-mcp", "-y"],
+      "env": {
+        "MINIMAX_API_KEY": "your-minimax-api-key",
+        "MINIMAX_API_HOST": "https://api.minimaxi.com"
+      }
+    }
+  }
+}
+```
+
+**Option 2: Edit settings.json directly**
+
+```bash
+mkdir -p ~/.silo/minimax/home/.claude
+cat > ~/.silo/minimax/home/.claude/settings.json << 'EOF'
+{
+  "mcpServers": {
+    "minimax": {
+      "command": "uvx",
+      "args": ["minimax-coding-plan-mcp", "-y"],
+      "env": {
+        "MINIMAX_API_KEY": "your-minimax-api-key",
+        "MINIMAX_API_HOST": "https://api.minimaxi.com"
+      }
+    }
+  }
+}
+EOF
+```
+
+**Verify:** Launch Claude Code and type `/mcp` to confirm the MiniMax tools are available:
+
+```bash
+silo exec -e minimax -- claude
+# Then type: /mcp
+```
+
+You should see `web_search` and `understand_image` listed.
+
+> **Note:** MCP server API keys are passed through the MCP config's `env` field, not through silo's manifest secrets. This is because Claude Code reads MCP env vars from its own settings, not from the process environment.
+
+### Other Provider MCP Servers
+
+The same pattern works for any MCP server. Enter the environment's shell, add the MCP server, and the configuration stays isolated:
+
+```bash
+silo shell -e <env-name>
+claude mcp add <server-name> -- <command> [args...]
+exit
+```
+
+Or directly edit `~/.silo/<env-name>/home/.claude/settings.json`.
+
 ## Daily Usage
 
 Once configured, switching is a single command:
