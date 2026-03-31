@@ -8,7 +8,10 @@
       "Bash(rustup default:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(curl -s https://api.github.com/repos/HelloiOS2014/silo/releases/latest)",
+      "Bash(gh release:*)",
+      "Bash(gh auth:*)"
     ]
   }
 }
