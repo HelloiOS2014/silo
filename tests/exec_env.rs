@@ -416,3 +416,135 @@ allow = []
     let env = build_child_env(&manifest, &host, BTreeMap::new(), Some("/tmp/work/run/12345"));
     assert_eq!(env["AIENV_EXEC_DIR"], "/tmp/work/run/12345");
 }
+
+#[test]
+fn exec_injects_envfile_secrets_into_child_process() {
+    let home = TempDir::new().unwrap();
+    let env_root = home.path().join(".aienv").join("work");
+    for dir in ["home", "config", "cache", "data", "state", "tmp", "run"] {
+        fs::create_dir_all(env_root.join(dir)).unwrap();
+    }
+    fs::write(
+        env_root.join("manifest.toml"),
+        format!(
+            r#"id = "work"
+root = "{root}"
+[env]
+allow = ["PATH"]
+[env.set]
+AI_ENV = "work"
+[secrets]
+provider = "envfile"
+items = ["MY_SECRET"]
+[shell]
+program = "/bin/zsh"
+init = "env.zsh"
+[network]
+mode = "default"
+"#,
+            root = env_root.display()
+        ),
+    )
+    .unwrap();
+    fs::write(env_root.join("env.zsh"), "export AI_ENV=work\n").unwrap();
+
+    let secrets_path = env_root.join("secrets.env");
+    fs::write(&secrets_path, "MY_SECRET=super-secret-value\n").unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&secrets_path, fs::Permissions::from_mode(0o600)).unwrap();
+    }
+
+    let mut cmd = Command::cargo_bin("aienv").unwrap();
+    cmd.env("HOME", home.path()).args([
+        "exec",
+        "-e",
+        "work",
+        "--",
+        "python3",
+        "-c",
+        "import os; print(os.environ.get('MY_SECRET', 'MISSING'))",
+    ]);
+
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("super-secret-value"));
+}
+
+#[test]
+fn exec_with_inherit_cwd_false_uses_env_home() {
+    let home = TempDir::new().unwrap();
+    let env_root = home.path().join(".aienv").join("work");
+    for dir in ["home", "config", "cache", "data", "state", "tmp", "run"] {
+        fs::create_dir_all(env_root.join(dir)).unwrap();
+    }
+    fs::write(
+        env_root.join("manifest.toml"),
+        format!(
+            r#"id = "work"
+root = "{root}"
+inherit_cwd = false
+[env]
+allow = ["PATH"]
+[secrets]
+provider = "none"
+[network]
+mode = "default"
+"#,
+            root = env_root.display()
+        ),
+    )
+    .unwrap();
+    fs::write(env_root.join("env.zsh"), "").unwrap();
+
+    let mut cmd = Command::cargo_bin("aienv").unwrap();
+    cmd.env("HOME", home.path()).args([
+        "exec",
+        "-e",
+        "work",
+        "--",
+        "python3",
+        "-c",
+        "import os; print(os.getcwd())",
+    ]);
+
+    cmd.assert().success().stdout(
+        predicate::str::contains(env_root.join("home").to_string_lossy().as_ref()),
+    );
+}
+
+#[test]
+fn exec_rejects_mismatched_manifest_id() {
+    let home = TempDir::new().unwrap();
+    let env_root = home.path().join(".aienv").join("work");
+    for dir in ["home", "config", "cache", "data", "state", "tmp", "run"] {
+        fs::create_dir_all(env_root.join(dir)).unwrap();
+    }
+    fs::write(
+        env_root.join("manifest.toml"),
+        format!(
+            r#"id = "wrong-id"
+root = "{root}"
+[env]
+allow = []
+"#,
+            root = env_root.display()
+        ),
+    )
+    .unwrap();
+
+    let mut cmd = Command::cargo_bin("aienv").unwrap();
+    cmd.env("HOME", home.path()).args([
+        "exec",
+        "-e",
+        "work",
+        "--",
+        "echo",
+        "hi",
+    ]);
+
+    cmd.assert()
+        .failure()
+        .stderr(predicate::str::contains("does not match"));
+}
