@@ -184,7 +184,9 @@ installMethod is native, but directory ~/.silo/myenv/home/.local/bin does not ex
 installMethod is native, but claude command not found at ~/.silo/myenv/home/.local/bin/claude
 ```
 
-**Fix**: Symlink the host binary into the silo HOME:
+**Fix** (two steps):
+
+**Step 1**: Symlink the host binary into the silo HOME:
 
 ```toml
 [setup]
@@ -194,6 +196,15 @@ on_init = [
 ]
 ```
 
+**Step 2**: Add `$HOME/.local/bin` to PATH via `env.prepend`:
+
+```toml
+[env.prepend]
+PATH = "$HOME/.local/bin"
+```
+
+`env.prepend` supports `$VAR` expansion — `$HOME` expands to the silo HOME, not the host HOME. Values are prepended with `:` as separator.
+
 **Why symlink, not copy?** The symlink automatically follows host upgrades. When the host updates (e.g. `claude update`), the silo environment picks up the new version without re-running setup.
 
 **Why only the binary, not `$HOME/.local/share/`?** Symlinking the share directory would let the silo process write into the host's version-management directory, breaking isolation. The binary symlink is read-only in practice and safe.
@@ -201,6 +212,9 @@ on_init = [
 **General pattern** for any native-installed tool:
 
 ```toml
+[env.prepend]
+PATH = "$HOME/.local/bin"
+
 [setup]
 on_init = [
   "mkdir -p $HOME/.local/bin && ln -sf $SILO_HOST_HOME/.local/bin/<tool> $HOME/.local/bin/<tool>",

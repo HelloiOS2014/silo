@@ -66,7 +66,42 @@ pub fn build_child_env(
         env.insert("SILO_HOST_HOME".into(), real_home.clone());
     }
 
+    // 7. env.prepend — prepend values to existing variables (colon-separated)
+    //    Applied after forced vars so $HOME etc. are available for expansion.
+    for (key, prefix) in &manifest.env.prepend {
+        let expanded = expand_env_vars(prefix, &env);
+        let new_value = match env.get(key) {
+            Some(existing) => format!("{expanded}:{existing}"),
+            None => expanded,
+        };
+        env.insert(key.clone(), new_value);
+    }
+
     env
+}
+
+fn expand_env_vars(value: &str, env: &BTreeMap<String, String>) -> String {
+    let mut result = String::with_capacity(value.len());
+    let mut chars = value.chars().peekable();
+    while let Some(c) = chars.next() {
+        if c == '$' {
+            let mut var_name = String::new();
+            while let Some(&next) = chars.peek() {
+                if next.is_ascii_alphanumeric() || next == '_' {
+                    var_name.push(next);
+                    chars.next();
+                } else {
+                    break;
+                }
+            }
+            if let Some(val) = env.get(&var_name) {
+                result.push_str(val);
+            }
+        } else {
+            result.push(c);
+        }
+    }
+    result
 }
 
 fn join_str(root: &Path, child: &str) -> String {

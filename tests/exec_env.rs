@@ -415,6 +415,50 @@ allow = []
 }
 
 #[test]
+fn env_prepend_prepends_to_existing_var() {
+    let manifest = Manifest::parse(
+        r#"
+id = "work"
+root = "/tmp/work"
+[env]
+allow = ["PATH"]
+[env.prepend]
+PATH = "$HOME/.local/bin"
+"#,
+    )
+    .unwrap();
+
+    let mut host = BTreeMap::new();
+    host.insert("PATH".into(), "/usr/bin:/bin".into());
+    host.insert("HOME".into(), "/Users/test".into());
+
+    let env = build_child_env(&manifest, &host, BTreeMap::new(), None);
+    // $HOME expands to the silo HOME (/tmp/work/home), not the host HOME
+    assert_eq!(env["PATH"], "/tmp/work/home/.local/bin:/usr/bin:/bin");
+}
+
+#[test]
+fn env_prepend_creates_var_when_missing() {
+    let manifest = Manifest::parse(
+        r#"
+id = "work"
+root = "/tmp/work"
+[env]
+allow = []
+[env.prepend]
+MY_PATH = "/extra/bin"
+"#,
+    )
+    .unwrap();
+
+    let mut host = BTreeMap::new();
+    host.insert("HOME".into(), "/Users/test".into());
+
+    let env = build_child_env(&manifest, &host, BTreeMap::new(), None);
+    assert_eq!(env["MY_PATH"], "/extra/bin");
+}
+
+#[test]
 fn silo_exec_dir_injected_when_provided() {
     let manifest = Manifest::parse(
         r#"

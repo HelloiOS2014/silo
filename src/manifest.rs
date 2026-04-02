@@ -44,6 +44,8 @@ pub struct EnvConfig {
     pub deny: Vec<String>,
     #[serde(default)]
     pub set: BTreeMap<String, String>,
+    #[serde(default)]
+    pub prepend: BTreeMap<String, String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -193,6 +195,15 @@ impl Manifest {
             if RESERVED_KEYS.contains(&key.as_str()) {
                 return Err(AienvError::ManifestValidation(format!(
                     "env.set contains reserved key: {key}"
+                )));
+            }
+        }
+
+        // Validate reserved keys in env.prepend
+        for key in self.env.prepend.keys() {
+            if RESERVED_KEYS.contains(&key.as_str()) {
+                return Err(AienvError::ManifestValidation(format!(
+                    "env.prepend contains reserved key: {key}"
                 )));
             }
         }

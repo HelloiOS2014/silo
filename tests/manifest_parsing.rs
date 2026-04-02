@@ -286,6 +286,34 @@ proxy_url = "http://proxy.local:8080"
 }
 
 #[test]
+fn parses_env_prepend() {
+    let raw = r#"
+id = "work"
+root = "/tmp/work"
+[env]
+allow = ["PATH"]
+[env.prepend]
+PATH = "$HOME/.local/bin"
+"#;
+    let manifest = Manifest::parse(raw).unwrap();
+    assert_eq!(manifest.env.prepend["PATH"], "$HOME/.local/bin");
+}
+
+#[test]
+fn rejects_reserved_key_in_env_prepend() {
+    let raw = r#"
+id = "work"
+root = "/tmp/work"
+[env]
+allow = []
+[env.prepend]
+HOME = "/bad"
+"#;
+    let err = Manifest::parse(raw).unwrap_err();
+    assert!(err.to_string().contains("reserved"));
+}
+
+#[test]
 fn expands_tilde_in_root_path() {
     let home = std::env::var("HOME").unwrap();
     let raw = r#"

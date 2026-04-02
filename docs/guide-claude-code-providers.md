@@ -342,9 +342,12 @@ Keychain is more secure — secrets are encrypted by the system and never appear
 
 **`installMethod is native, but claude command not found` (native/curl install only):**
 
-If you installed Claude Code via `curl -fsSL https://claude.ai/install.sh | sh`, the binary lives at `~/.local/bin/claude`. Since silo redirects `$HOME`, Claude can't find itself at `$HOME/.local/bin/claude`. Add a symlink in your manifest's `[setup].on_init`:
+If you installed Claude Code via `curl -fsSL https://claude.ai/install.sh | sh`, the binary lives at `~/.local/bin/claude`. Since silo redirects `$HOME`, Claude can't find itself at `$HOME/.local/bin/claude`. Two changes needed in your manifest:
 
 ```toml
+[env.prepend]
+PATH = "$HOME/.local/bin"
+
 [setup]
 on_init = [
   # Fix for native-installed Claude Code
@@ -353,7 +356,7 @@ on_init = [
 ]
 ```
 
-Then run `silo setup -e <env> --force`. The symlink auto-follows host upgrades — no re-setup needed after `claude update`. This does **not** break isolation: only the read-only binary is linked, not the config or version-management directories. See [Pattern 8 in the Tool Setup Guide](guide-tool-setup.md#pattern-8-native-installers-home-relative-binaries) for details.
+Then run `silo setup -e <env> --force`. The symlink auto-follows host upgrades — no re-setup needed after `claude update`. `env.prepend` supports `$HOME` expansion (resolves to the silo HOME). This does **not** break isolation: only the read-only binary is linked, not the config or version-management directories. See [Pattern 8 in the Tool Setup Guide](guide-tool-setup.md#pattern-8-native-installers-home-relative-binaries) for details.
 
 If you installed via npm (`npm install -g @anthropic-ai/claude-code`), this issue does not apply.
 

@@ -342,9 +342,12 @@ items = ["ANTHROPIC_AUTH_TOKEN"]
 
 **`installMethod is native, but claude command not found`（仅限原生/curl 安装方式）：**
 
-如果你通过 `curl -fsSL https://claude.ai/install.sh | sh` 安装了 Claude Code，二进制文件在 `~/.local/bin/claude`。由于 silo 重定向了 `$HOME`，Claude 在 `$HOME/.local/bin/claude` 找不到自身。需要在 manifest 的 `[setup].on_init` 中添加符号链接：
+如果你通过 `curl -fsSL https://claude.ai/install.sh | sh` 安装了 Claude Code，二进制文件在 `~/.local/bin/claude`。由于 silo 重定向了 `$HOME`，Claude 在 `$HOME/.local/bin/claude` 找不到自身。需要在 manifest 中做两处修改：
 
 ```toml
+[env.prepend]
+PATH = "$HOME/.local/bin"
+
 [setup]
 on_init = [
   # 修复原生安装的 Claude Code 自检问题
@@ -353,7 +356,7 @@ on_init = [
 ]
 ```
 
-然后执行 `silo setup -e <env> --force`。符号链接会自动跟随宿主机的升级——`claude update` 之后无需重新 setup。这**不会**破坏隔离性：只链接了只读的二进制文件，配置和版本管理目录不受影响。详见[工具安装指南的模式八](guide-tool-setup_zh.md#模式八native-安装器二进制文件在-home-下)。
+然后执行 `silo setup -e <env> --force`。符号链接会自动跟随宿主机的升级——`claude update` 之后无需重新 setup。`env.prepend` 支持 `$HOME` 变量展开（解析为 silo HOME）。这**不会**破坏隔离性：只链接了只读的二进制文件，配置和版本管理目录不受影响。详见[工具安装指南的模式八](guide-tool-setup_zh.md#模式八native-安装器二进制文件在-home-下)。
 
 如果通过 npm 安装（`npm install -g @anthropic-ai/claude-code`），不存在此问题。
 

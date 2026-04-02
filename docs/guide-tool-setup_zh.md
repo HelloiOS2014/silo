@@ -184,7 +184,9 @@ installMethod is native, but directory ~/.silo/myenv/home/.local/bin does not ex
 installMethod is native, but claude command not found at ~/.silo/myenv/home/.local/bin/claude
 ```
 
-**修复方法**：将宿主机的二进制文件符号链接到 silo HOME 下：
+**修复方法**（两步）：
+
+**第一步**：将宿主机的二进制文件符号链接到 silo HOME 下：
 
 ```toml
 [setup]
@@ -194,6 +196,15 @@ on_init = [
 ]
 ```
 
+**第二步**：通过 `env.prepend` 将 `$HOME/.local/bin` 加入 PATH：
+
+```toml
+[env.prepend]
+PATH = "$HOME/.local/bin"
+```
+
+`env.prepend` 支持 `$VAR` 变量展开——`$HOME` 会展开为 silo 的 HOME 路径，而非宿主机 HOME。值以 `:` 为分隔符前置到已有变量。
+
 **为什么用 symlink 而不是 copy？** 符号链接会自动跟随宿主机的升级。当宿主机更新工具版本（如 `claude update`）后，silo 环境无需重新 setup 即可使用新版本。
 
 **为什么只链接二进制，不链接 `$HOME/.local/share/`？** 链接 share 目录会让 silo 中的进程写入宿主机的版本管理目录，破坏隔离性。只链接二进制文件实际上是只读访问，不影响隔离。
@@ -201,6 +212,9 @@ on_init = [
 **通用写法**（适用于任何 native 安装的工具）：
 
 ```toml
+[env.prepend]
+PATH = "$HOME/.local/bin"
+
 [setup]
 on_init = [
   "mkdir -p $HOME/.local/bin && ln -sf $SILO_HOST_HOME/.local/bin/<工具名> $HOME/.local/bin/<工具名>",
