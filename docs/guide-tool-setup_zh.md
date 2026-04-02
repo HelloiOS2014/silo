@@ -151,7 +151,7 @@ on_init = [
 [setup]
 on_init = [
   "mkdir -p $HOME/.claude/skills/ios-pilot",
-  "cp $SILO_HOST_HOME/.claude/skills/ios-pilot/SKILL.md $HOME/.claude/skills/ios-pilot/",
+  "cp -n $SILO_HOST_HOME/.claude/skills/ios-pilot/SKILL.md $HOME/.claude/skills/ios-pilot/ 2>/dev/null || true",
 ]
 ```
 
@@ -298,7 +298,8 @@ silo exec -e ai-dev -- lark-cli calendar +agenda
 
 ```bash
 # 文件复制：-n 表示不覆盖已有文件
-cp -n $SILO_HOST_HOME/source $HOME/dest
+# 注意：macOS 的 cp -n 在文件已存在时返回 exit 1，需加 || true
+cp -n $SILO_HOST_HOME/source $HOME/dest 2>/dev/null || true
 
 # 条件执行：仅在文件不存在时才执行
 test -f $HOME/.config/tool/config.json || tool config init

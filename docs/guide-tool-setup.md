@@ -151,7 +151,7 @@ Use `$SILO_HOST_HOME` to reference the real host HOME directory:
 [setup]
 on_init = [
   "mkdir -p $HOME/.claude/skills/ios-pilot",
-  "cp $SILO_HOST_HOME/.claude/skills/ios-pilot/SKILL.md $HOME/.claude/skills/ios-pilot/",
+  "cp -n $SILO_HOST_HOME/.claude/skills/ios-pilot/SKILL.md $HOME/.claude/skills/ios-pilot/ 2>/dev/null || true",
 ]
 ```
 
@@ -298,7 +298,8 @@ silo exec -e ai-dev -- lark-cli calendar +agenda
 
 ```bash
 # File copy: -n = don't overwrite existing
-cp -n $SILO_HOST_HOME/source $HOME/dest
+# NOTE: macOS cp -n returns exit 1 when file exists, so append || true
+cp -n $SILO_HOST_HOME/source $HOME/dest 2>/dev/null || true
 
 # Conditional execution: only if file doesn't exist
 test -f $HOME/.config/tool/config.json || tool config init
