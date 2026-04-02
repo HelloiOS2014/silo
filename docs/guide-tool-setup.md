@@ -171,6 +171,44 @@ on_init = [
 ]
 ```
 
+### Pattern 8: Native Installers (HOME-relative Binaries)
+
+**Examples**: Claude Code (curl installer), Rust/rustup, Deno
+
+Some tools use native installers (e.g. `curl | sh`) that place binaries under `$HOME/.local/bin/` and version data under `$HOME/.local/share/`. Since silo redirects `$HOME`, the tool's self-check fails — it looks for its own binary at the **silo** HOME path, not the real host path.
+
+**Symptom** (Claude Code native install):
+
+```
+installMethod is native, but directory ~/.silo/myenv/home/.local/bin does not exist
+installMethod is native, but claude command not found at ~/.silo/myenv/home/.local/bin/claude
+```
+
+**Fix**: Symlink the host binary into the silo HOME:
+
+```toml
+[setup]
+on_init = [
+  # Link host's native-installed binary so the tool's self-check passes
+  "mkdir -p $HOME/.local/bin && ln -sf $SILO_HOST_HOME/.local/bin/claude $HOME/.local/bin/claude",
+]
+```
+
+**Why symlink, not copy?** The symlink automatically follows host upgrades. When the host updates (e.g. `claude update`), the silo environment picks up the new version without re-running setup.
+
+**Why only the binary, not `$HOME/.local/share/`?** Symlinking the share directory would let the silo process write into the host's version-management directory, breaking isolation. The binary symlink is read-only in practice and safe.
+
+**General pattern** for any native-installed tool:
+
+```toml
+[setup]
+on_init = [
+  "mkdir -p $HOME/.local/bin && ln -sf $SILO_HOST_HOME/.local/bin/<tool> $HOME/.local/bin/<tool>",
+]
+```
+
+> **npm-installed tools don't need this** — `npm install -g` places binaries in the npm global prefix (e.g. `/usr/local/bin/`), which is on PATH and doesn't depend on `$HOME`.
+
 ---
 
 ## Complete Example: ios-pilot + lark-cli

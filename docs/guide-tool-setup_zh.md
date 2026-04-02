@@ -171,6 +171,44 @@ on_init = [
 ]
 ```
 
+### 模式八：Native 安装器（二进制文件在 HOME 下）
+
+**代表工具**: Claude Code（curl 安装脚本）、Rust/rustup、Deno
+
+某些工具通过原生安装脚本（如 `curl | sh`）将二进制文件安装到 `$HOME/.local/bin/`，版本数据放在 `$HOME/.local/share/`。由于 silo 重定向了 `$HOME`，工具的自检会失败——它在 silo 的 HOME 路径下找不到自己的二进制文件。
+
+**典型报错**（以 Claude Code native 安装为例）：
+
+```
+installMethod is native, but directory ~/.silo/myenv/home/.local/bin does not exist
+installMethod is native, but claude command not found at ~/.silo/myenv/home/.local/bin/claude
+```
+
+**修复方法**：将宿主机的二进制文件符号链接到 silo HOME 下：
+
+```toml
+[setup]
+on_init = [
+  # 链接宿主机 native 安装的二进制，确保工具自检通过
+  "mkdir -p $HOME/.local/bin && ln -sf $SILO_HOST_HOME/.local/bin/claude $HOME/.local/bin/claude",
+]
+```
+
+**为什么用 symlink 而不是 copy？** 符号链接会自动跟随宿主机的升级。当宿主机更新工具版本（如 `claude update`）后，silo 环境无需重新 setup 即可使用新版本。
+
+**为什么只链接二进制，不链接 `$HOME/.local/share/`？** 链接 share 目录会让 silo 中的进程写入宿主机的版本管理目录，破坏隔离性。只链接二进制文件实际上是只读访问，不影响隔离。
+
+**通用写法**（适用于任何 native 安装的工具）：
+
+```toml
+[setup]
+on_init = [
+  "mkdir -p $HOME/.local/bin && ln -sf $SILO_HOST_HOME/.local/bin/<工具名> $HOME/.local/bin/<工具名>",
+]
+```
+
+> **npm 安装的工具不需要这样做**——`npm install -g` 将二进制放在 npm 全局 prefix（如 `/usr/local/bin/`），在 PATH 上且不依赖 `$HOME`。
+
 ---
 
 ## 完整范例：ios-pilot + lark-cli 组合环境

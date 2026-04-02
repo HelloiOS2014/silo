@@ -13,7 +13,9 @@ silo creates an independent HOME and config directory for each source. One comma
 ## Prerequisites
 
 - silo installed (`cargo install --path .`)
-- Claude Code installed (`npm install -g @anthropic-ai/claude-code`)
+- Claude Code installed via **one** of these methods:
+  - **npm** (recommended for silo): `npm install -g @anthropic-ai/claude-code` — works out of the box, binary lives in npm global prefix (e.g. `/usr/local/bin/`)
+  - **Native installer**: `curl -fsSL https://claude.ai/install.sh | sh` — binary at `~/.local/bin/claude`, requires [extra setup for silo](#native-install-fix)
 - API keys for your chosen providers
 
 ## Setting Up MiniMax
@@ -335,6 +337,25 @@ items = ["ANTHROPIC_AUTH_TOKEN"]
 Keychain is more secure — secrets are encrypted by the system and never appear as plaintext on disk.
 
 ## Troubleshooting
+
+<a id="native-install-fix"></a>
+
+**`installMethod is native, but claude command not found` (native/curl install only):**
+
+If you installed Claude Code via `curl -fsSL https://claude.ai/install.sh | sh`, the binary lives at `~/.local/bin/claude`. Since silo redirects `$HOME`, Claude can't find itself at `$HOME/.local/bin/claude`. Add a symlink in your manifest's `[setup].on_init`:
+
+```toml
+[setup]
+on_init = [
+  # Fix for native-installed Claude Code
+  "mkdir -p $HOME/.local/bin && ln -sf $SILO_HOST_HOME/.local/bin/claude $HOME/.local/bin/claude",
+  # ... your other setup commands
+]
+```
+
+Then run `silo setup -e <env> --force`. The symlink auto-follows host upgrades — no re-setup needed after `claude update`. This does **not** break isolation: only the read-only binary is linked, not the config or version-management directories. See [Pattern 8 in the Tool Setup Guide](guide-tool-setup.md#pattern-8-native-installers-home-relative-binaries) for details.
+
+If you installed via npm (`npm install -g @anthropic-ai/claude-code`), this issue does not apply.
 
 **Claude Code prompts for login or onboarding:**
 Ensure `$HOME/.claude.json` was created (step 4).
