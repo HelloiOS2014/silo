@@ -107,7 +107,10 @@ fn init_creates_keychain_symlink() {
     assert!(silo_keychains.exists(), "keychain symlink should exist");
 
     let metadata = fs::symlink_metadata(&silo_keychains).unwrap();
-    assert!(metadata.is_symlink(), "should be a symlink, not a directory");
+    assert!(
+        metadata.is_symlink(),
+        "should be a symlink, not a directory"
+    );
 
     assert_eq!(
         fs::read_link(&silo_keychains).unwrap(),
