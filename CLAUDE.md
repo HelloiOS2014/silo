@@ -14,11 +14,21 @@ silo — lightweight environment isolation for AI CLI tools on macOS. Creates is
 
 ```bash
 cargo build                    # Build
-cargo test                     # Run all 62 tests
+cargo test                     # Run all 64 tests
 cargo clippy --all-targets -- -D warnings  # Lint
 cargo fmt                      # Format
 cargo run -- <subcommand>      # Run locally
 ```
+
+## Install
+
+**MUST install to `~/.local/bin`, NEVER to `~/.cargo/bin`:**
+
+```bash
+cargo install --path . --root ~/.local --force
+```
+
+This is mandatory — the user's PATH prioritizes `~/.local/bin`. Installing to `~/.cargo/bin` (cargo's default) creates a shadow binary that won't be used.
 
 ## Source Structure
 
