@@ -438,6 +438,74 @@ PATH = "$HOME/.local/bin"
 }
 
 #[test]
+fn env_prepend_cannot_override_forced_vars() {
+    // Reserved key validation prevents HOME from being used in env.prepend
+    let raw = r#"
+id = "work"
+root = "/tmp/work"
+[env]
+allow = []
+[env.prepend]
+HOME = "/evil"
+"#;
+    let err = Manifest::parse(raw).unwrap_err();
+    assert!(err.to_string().contains("reserved"));
+
+    // Same for all other forced vars
+    for key in [
+        "XDG_CONFIG_HOME",
+        "XDG_CACHE_HOME",
+        "XDG_DATA_HOME",
+        "XDG_STATE_HOME",
+        "TMPDIR",
+        "SILO_ROOT",
+        "SILO_HOST_HOME",
+    ] {
+        let raw = format!(
+            r#"
+id = "work"
+root = "/tmp/work"
+[env]
+allow = []
+[env.prepend]
+{key} = "/evil"
+"#
+        );
+        let err = Manifest::parse(&raw).unwrap_err();
+        assert!(
+            err.to_string().contains("reserved"),
+            "env.prepend should reject reserved key: {key}"
+        );
+    }
+}
+
+#[test]
+fn env_prepend_expands_silo_home_not_host_home() {
+    let manifest = Manifest::parse(
+        r#"
+id = "work"
+root = "/tmp/work"
+[env]
+allow = ["PATH"]
+[env.prepend]
+PATH = "$HOME/.local/bin"
+"#,
+    )
+    .unwrap();
+
+    let mut host = BTreeMap::new();
+    host.insert("PATH".into(), "/usr/bin".into());
+    host.insert("HOME".into(), "/Users/real-user".into());
+
+    let env = build_child_env(&manifest, &host, BTreeMap::new(), None);
+    // $HOME must expand to the SILO home (/tmp/work/home), NOT the host home
+    assert!(env["PATH"].starts_with("/tmp/work/home/.local/bin:"));
+    assert!(!env["PATH"].contains("/Users/real-user"));
+    // Forced HOME is still the silo home
+    assert_eq!(env["HOME"], "/tmp/work/home");
+}
+
+#[test]
 fn env_prepend_creates_var_when_missing() {
     let manifest = Manifest::parse(
         r#"
