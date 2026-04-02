@@ -11,6 +11,20 @@ pub fn run(env: &str) -> Result<()> {
         fs::create_dir_all(root.join(suffix))?;
     }
 
+    // macOS: symlink Library/Keychains so isolated tools can access the system keychain
+    #[cfg(target_os = "macos")]
+    {
+        let host_home = std::env::var("HOME").unwrap_or_default();
+        if !host_home.is_empty() {
+            let host_keychains = std::path::Path::new(&host_home).join("Library/Keychains");
+            let silo_keychains = root.join("home/Library/Keychains");
+            if host_keychains.exists() && !silo_keychains.exists() {
+                fs::create_dir_all(silo_keychains.parent().unwrap())?;
+                std::os::unix::fs::symlink(&host_keychains, &silo_keychains)?;
+            }
+        }
+    }
+
     let manifest_path = root.join("manifest.toml");
     if !manifest_path.exists() {
         let manifest = default_manifest(env, &root);

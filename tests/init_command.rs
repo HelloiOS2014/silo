@@ -88,6 +88,41 @@ fn init_creates_data_state_dirs_and_secrets_env() {
 }
 
 #[test]
+#[cfg(target_os = "macos")]
+fn init_creates_keychain_symlink() {
+    let home = TempDir::new().unwrap();
+    let env_root = home.path().join(".silo").join("kctest");
+
+    // Create a fake Library/Keychains in the temp HOME so the symlink target exists
+    let host_keychains = home.path().join("Library/Keychains");
+    fs::create_dir_all(&host_keychains).unwrap();
+
+    let mut cmd = Command::cargo_bin("silo").unwrap();
+    cmd.env("HOME", home.path())
+        .args(["init", "--env", "kctest"]);
+
+    cmd.assert().success();
+
+    let silo_keychains = env_root.join("home/Library/Keychains");
+    assert!(silo_keychains.exists(), "keychain symlink should exist");
+
+    let metadata = fs::symlink_metadata(&silo_keychains).unwrap();
+    assert!(metadata.is_symlink(), "should be a symlink, not a directory");
+
+    assert_eq!(
+        fs::read_link(&silo_keychains).unwrap(),
+        host_keychains,
+        "symlink should point to host keychains"
+    );
+
+    // Idempotent: running init again should not fail
+    let mut cmd2 = Command::cargo_bin("silo").unwrap();
+    cmd2.env("HOME", home.path())
+        .args(["init", "--env", "kctest"]);
+    cmd2.assert().success();
+}
+
+#[test]
 fn init_rejects_path_escaping_env_names() {
     let home = TempDir::new().unwrap();
 
