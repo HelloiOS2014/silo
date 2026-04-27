@@ -120,6 +120,7 @@ CLAUDE_CODE_SUBAGENT_MODEL               = "deepseek-v4-flash"
 CLAUDE_CODE_EFFORT_LEVEL                 = "max"
 API_TIMEOUT_MS                           = "3000000"
 CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC = "1"
+DISABLE_AUTOUPDATER                      = "1"
 AI_ENV                                   = "deepseek"
 
 [env.prepend]
