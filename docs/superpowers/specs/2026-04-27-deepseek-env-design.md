@@ -87,6 +87,9 @@ API_TIMEOUT_MS                           = "3000000"
 CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC = "1"
 AI_ENV                                   = "deepseek"
 
+[env.prepend]
+PATH = "$HOME/.local/bin"
+
 [secrets]
 provider = "envfile"
 items = ["ANTHROPIC_AUTH_TOKEN"]
@@ -109,7 +112,7 @@ on_init = [
 - **`API_TIMEOUT_MS = 3000000`** (50 min) — DeepSeek "thinking mode" responses can be slow; matches the minimax precedent.
 - **`CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC = 1`** — telemetry would otherwise hit Anthropic infrastructure with metadata about requests that actually went to DeepSeek.
 - **`secrets.items` has only `ANTHROPIC_AUTH_TOKEN`** — DeepSeek's Anthropic endpoint requires only this one secret. No analog to minimax's `MINIMAX_API_KEY`.
-- **No `env.prepend`** — `claude` is on host PATH; no per-env PATH augmentation needed.
+- **`env.prepend.PATH = "$HOME/.local/bin"`** — Native-installed Claude Code does a startup self-check that requires `$HOME/.local/bin` to be on PATH. Host PATH inheritance alone gives `/Users/panghu/.local/bin`, but inside the env `$HOME` is redirected to `~/.silo/deepseek/home`, so we prepend the isolated `.local/bin` (which holds the symlink installed by the setup hook). `$HOME` expansion happens against the already-built env, including silo's forced HOME.
 
 ## Secrets
 

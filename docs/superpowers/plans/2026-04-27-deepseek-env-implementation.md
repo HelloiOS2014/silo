@@ -122,6 +122,9 @@ API_TIMEOUT_MS                           = "3000000"
 CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC = "1"
 AI_ENV                                   = "deepseek"
 
+[env.prepend]
+PATH = "$HOME/.local/bin"
+
 [secrets]
 provider = "envfile"
 items = ["ANTHROPIC_AUTH_TOKEN"]
