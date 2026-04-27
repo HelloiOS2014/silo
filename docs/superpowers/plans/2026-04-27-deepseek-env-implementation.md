@@ -133,6 +133,8 @@ mode = "default"
 on_init = [
   "mkdir -p $HOME/.claude",
   "echo '{\"hasCompletedOnboarding\": true}' > $HOME/.claude.json",
+  "mkdir -p $HOME/.local/bin",
+  "ln -sf $SILO_HOST_HOME/.local/bin/claude $HOME/.local/bin/claude",
 ]
 ```
 

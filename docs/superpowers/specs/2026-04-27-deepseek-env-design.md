@@ -98,6 +98,8 @@ mode = "default"
 on_init = [
   "mkdir -p $HOME/.claude",
   "echo '{\"hasCompletedOnboarding\": true}' > $HOME/.claude.json",
+  "mkdir -p $HOME/.local/bin",
+  "ln -sf $SILO_HOST_HOME/.local/bin/claude $HOME/.local/bin/claude",
 ]
 ```
 
@@ -153,7 +155,7 @@ Manual smoke-test tiers; cargo tests are unaffected (no source change, current 6
 
 ## Risks / Open Items
 
-- **Host `claude` install path.** If the host installed Claude Code via the native installer (`~/.local/bin/claude`), `~/.local/bin` must be on PATH inside the env. silo inherits `PATH` from `[env].allow`, so as long as the host PATH already includes `~/.local/bin` (per project install convention) this works without changes. Documented as a footnote in the README provider guide.
+- **Host `claude` install path (resolved).** Native-installed Claude Code (`~/.local/bin/claude` → `~/.local/share/claude/versions/<v>`) self-checks `$HOME/.local/bin/claude` at startup. With HOME redirected by silo, that path doesn't exist and Claude Code errors. Resolved by adding two extra setup hooks: `mkdir -p $HOME/.local/bin` and `ln -sf $SILO_HOST_HOME/.local/bin/claude $HOME/.local/bin/claude`. Symlinking the host `~/.local/bin/claude` (itself a versioned symlink) means host updates flow through transparently. PATH inheritance from `[env].allow` is still required separately.
 - **Model name churn.** DeepSeek has been bumping versions (V3.1 → V3.2 → V4). The manifest pins `deepseek-v4-pro` / `deepseek-v4-flash` — accurate as of 2026-04-27. Any future model rename is a one-line manifest edit.
 - **`ANTHROPIC_AUTH_TOKEN` value in env dump.** Tier-2 verification command (`silo exec -e deepseek -- env`) prints the token to stdout. This is local-only and acceptable for one-time validation, but should not be scripted into automated tests or committed logs.
 
